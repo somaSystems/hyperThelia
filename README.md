@@ -5,35 +5,41 @@
 <p align="center">
   <b>Run the HyperThelia 3D Pipeline on Google Colab:</b><br/>
 
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia1_Segmentation.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open segmentation notebook in Colab"/> Segmentation
-  </a>
-
-  <!-- Replace `hyperthelia2_Tracking.ipynb` below with your actual second-notebook filename -->
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia2_Tracking.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open tracking notebook in Colab"/> Tracking
-  </a>
-
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia3_Measures.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open measurement notebook in Colab"/> Measurement
+  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open demo notebook in Colab"/> Run Demo
   </a>
 </p>
 
 ---
+
 # HyperThelia: 3D Cell Segmentation, Tracking, and Measurement
 
 A modular, Google Colab-based pipeline for segmentation, tracking, and measurement of cells in 3D microscopy images.
 
 ---
+
 ## Table of Contents
 
-1. [QuickStart (Recommended)](#quickstart-recommended)  
-2. [Project Structure](#1-project-structure)  
-3. [Initial Setup](#2-initial-setup)  
-4. [Segmentation](#3-segmentation)  
-5. [Tracking and Propagation](#4-tracking-and-propagation)  
-6. [Measurement and Export](#5-measurement-and-export)  
-7. [License and Authors](#6-license-and-authors)
+1. [Run the Demo First](#run-the-demo-first)  
+2. [QuickStart (Recommended)](#quickstart-recommended)  
+3. [Project Structure](#1-project-structure)  
+4. [Initial Setup](#2-initial-setup)  
+5. [Segmentation](#3-segmentation)  
+6. [Tracking and Propagation](#4-tracking-and-propagation)  
+7. [Measurement and Export](#5-measurement-and-export)  
+8. [License and Authors](#6-license-and-authors)
+
+---
+
+## Run the Demo First
+
+<p align="center">
+  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open demo notebook in Colab"/> Run_Demo_hyperthelia.ipynb
+  </a><br/>
+  <em>Just open in Colab and follow the steps inside—no setup required.</em>
+</p>
+
 ---
 
 ## QuickStart (Recommended)
@@ -47,7 +53,7 @@ This is the fastest way to get started.
    ```python
    from google.colab import drive
    drive.mount('/content/drive')
-   ```
+
 5. **Define the path to your project directory and raw data folder.**  
    To do this:
    - Use the file browser on the left side of Colab.
