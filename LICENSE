@@ -1,0 +1,13 @@
+# LICENSE
+
+This repository contains two types of content, each governed by a separate license:
+
+## Code (e.g. Python scripts in `notebooks/lib/`)
+
+Copyright (c) 2025 Lucas Dent  
+Licensed under the MIT License. See LICENSE-CODE.txt.
+
+## Data, Notebooks, Documentation, and Example Images (e.g. TIFFs in `data_demo/`)
+
+Licensed under Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). See LICENSE-DATA.txt.
+
