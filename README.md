@@ -44,11 +44,25 @@ A modular, Google Colab-based pipeline for segmentation, tracking, and measureme
 
 ## QuickStart (Recommended)
 
-This is the fastest way to get started.
+<p align="center">
+  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_1.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open segmentation notebook in Colab"/> Segmentation
+  </a>
+
+  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_2.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open tracking notebook in Colab"/> Tracking
+  </a>
+
+  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_3.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open measurement notebook in Colab"/> Measurement
+  </a>
+</p>
+
+This is the fastest way to get started using your own data.
 
 1. **Download the entire project directory** from GitHub. It includes all necessary notebooks and folders.
 2. **Upload the whole directory to your Google Drive.**
-3. Open the first notebook, `hyperthelia_1.ipynb`, in **Google Colab**.
+3. Open the first notebook (`hyperthelia_1.ipynb`) in **Google Colab**.
 4. In the first cell, **mount your Google Drive**:
    ```python
    from google.colab import drive
