@@ -1,4 +1,6 @@
 from pathlib import Path
+import sys
+
 
 def clone_hyperthelia_repo(clone_parent_dir):
     REPO_NAME = "HyperThelia"
@@ -13,10 +15,17 @@ def clone_hyperthelia_repo(clone_parent_dir):
         import subprocess
         subprocess.run(["git", "clone", REPO_URL, str(clone_dir)], check=True)
     else:
-        print(f"✅ Repo already exists at: {clone_dir}")
+        print(f"Repo already exists at: {clone_dir}")
 
-    print(f"📁 BASE_PROJECT_DIR is set to: {base_project_dir}")
+    # Add lib directory to sys.path
+    lib_dir = base_project_dir / "notebooks" / "lib"
+    if str(lib_dir) not in sys.path:
+        sys.path.insert(0, str(lib_dir))
+        print(f"Added to sys.path: {lib_dir}")
+
+    print(f"BASE_PROJECT_DIR is set to: {base_project_dir}")
     return clone_dir, base_project_dir
+
 
 def setup_project_io(base_project_dir, raw_dir=None):
     """
@@ -31,8 +40,9 @@ def setup_project_io(base_project_dir, raw_dir=None):
         raw_dir = base_project_dir / "data_demo"
 
     if not raw_dir.exists():
-        raise FileNotFoundError(f"❌ Raw input folder not found: {raw_dir}")
+        raise FileNotFoundError(f"Raw input folder not found: {raw_dir}")
 
-    print(f"📁 Project outputs will be saved to: {outputs_dir}")
-    print(f"📁 Looking for raw experiment folders in: {raw_dir}")
+    print(f"Project outputs will be saved to: {outputs_dir}")
+    print(f"Looking for raw experiment folders in: {raw_dir}")
     return raw_dir, outputs_dir
+
