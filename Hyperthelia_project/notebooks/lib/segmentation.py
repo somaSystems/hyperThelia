@@ -2,6 +2,8 @@ from pathlib import Path
 from tifffile import imread, imwrite
 import numpy as np
 import pickle
+from cellpose import models, core, io
+
 
 def setup_cellpose_model(gpu=True):
     """
