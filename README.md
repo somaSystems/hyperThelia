@@ -5,22 +5,18 @@
 <p align="center">
   <b>Run the HyperThelia 3D Pipeline on Google Colab:</b><br/>
 
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/notebooks/hyperthelia_1.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open segmentation notebook in Colab"/>
-    Segmentation
+  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_1.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open segmentation notebook in Colab"/> Segmentation
   </a>
 
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/notebooks/hyperthelia_2.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open tracking notebook in Colab"/>
-    Tracking
+  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_2.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open tracking notebook in Colab"/> Tracking
   </a>
 
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/notebooks/hyperthelia_3.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open measurement notebook in Colab"/>
-    Measurement
+  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_3.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open measurement notebook in Colab"/> Measurement
   </a>
 </p>
-
 ---
 # HyperThelia: 3D Cell Segmentation, Tracking, and Measurement
 
