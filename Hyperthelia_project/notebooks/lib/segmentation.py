@@ -3,6 +3,19 @@ from tifffile import imread, imwrite
 import numpy as np
 import pickle
 
+def setup_cellpose_model(gpu=True):
+    """
+    Sets up Cellpose model with SAM backend and returns it.
+    Also enables logging and checks GPU availability.
+    """
+    io.logger_setup()
+
+    if gpu and not core.use_gpu():
+        raise ImportError("❌ No GPU access. Change your Colab runtime to GPU.")
+
+    print("✅ Cellpose model initialised (SAM backend)")
+    return models.CellposeModel(gpu=gpu)
+
 def get_tiff_groups_by_experiment(raw_dir):
     """
     Finds all experiment folders in `raw_dir` and collects raw TIFFs in each.
