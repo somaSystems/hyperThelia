@@ -2,6 +2,39 @@ from pathlib import Path
 from google.colab import files, drive
 import shutil
 
+def upload_multiple_tiffs(base_project_dir):
+    """
+    Prompts user to upload one or more TIFF files.
+    Saves them in raw_data/user_upload/.
+    Returns: Path to raw_data directory.
+    """
+    border = "=" * 60
+    print(f"\n{border}")
+    print("STEP 1: Upload your TIFF files")
+    print(border)
+    print("Use Ctrl (or Cmd) or Shift to select multiple files.\n")
+
+    uploaded = files.upload()
+
+    experiment_name = "user_upload"
+    raw_data_dir = base_project_dir / "raw_data"
+    exp_dir = raw_data_dir / experiment_name
+    exp_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"\nSaving files to: {exp_dir.resolve()}\n")
+    for filename in uploaded:
+        src = Path(filename)
+        dst = exp_dir / src.name
+        shutil.move(str(src), dst)
+        print(f"- {dst.name}")
+
+    print(f"\n{border}")
+    print("Upload complete. Ready to run segmentation.")
+    print(border)
+
+    return raw_data_dir
+
+
 def choose_upload_method(base_project_dir):
     """
     Lets user choose between uploading TIFFs or using Google Drive.
