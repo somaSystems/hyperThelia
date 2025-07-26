@@ -36,9 +36,6 @@ frame_0002.tif
 Everything else is handled by the pipeline.
 
 ---
-
-
----
 ## Table of Contents
 
 1. [Run the Demo First](#run-the-demo-first)  
