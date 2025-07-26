@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>Run the full 3D pipeline on demo data in Google Colab:</b><br/>
+  <b>Run HyperThelia on demo data in Colab:</b><br/>
   <a href="https://bit.ly/hyperthelia-demo" target="_blank">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run in Colab"/>
   </a><br/><br/>
