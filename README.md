@@ -3,14 +3,12 @@
 </p>
 
 <p align="center">
-  Run the full pipeline on demo data in Google Colab:<br/>
+  <b>Run the full 3D pipeline on demo data in Google Colab:</b><br/>
   <a href="https://bit.ly/hyperthelia-demo" target="_blank">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run in Colab"/>
-    Run in Colab
   </a><br/>
-  No setup is needed. Set runtime to GPU → T4, and run all.
+  One click. No setup. In Colab: <code>Runtime → Change runtime type → GPU (T4)</code>, then <code>Runtime → Run all</code>.
 </p>
-
 
 ---
 
