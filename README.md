@@ -1,23 +1,19 @@
 <p align="center">
-  <img src="HyperThelia_Logo.png" alt="HyperThelia Logo" width="300"/>
+  <img src="hyper_thelia.png" alt="HyperThelia Logo" width="300"/>
 </p>
 
 <p align="center">
-  <b>Try HyperThelia instantly in Google Colab:</b><br/>
-
   <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb" target="_blank">
+    Run on demo data  
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run demo in Colab"/>
-  </a>  
-  <br/>
-  Run on demo data
+  </a>
 </p>
 
 <p align="center">
   <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_YourData_hyperthelia.ipynb" target="_blank">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run on your data in Colab"/>
-  </a>  
-  <br/>
-  Run on your data
+    Run on your data  
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run your data in Colab"/>
+  </a>
 </p>
 
 
