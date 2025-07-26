@@ -3,6 +3,10 @@
 </p>
 
 <p align="center">
+  Try now — runs instantly in the cloud, no setup needed.
+</p>
+
+<p align="center">
   <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb" target="_blank">
     Run on demo data  
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run demo in Colab"/>
@@ -15,7 +19,6 @@
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run your data in Colab"/>
   </a>
 </p>
-
 
 ---
 
