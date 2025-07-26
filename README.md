@@ -73,8 +73,6 @@ Everything runs in the cloud with GPU acceleration—no local install needed.
 
 ## QuickStart (Recommended)
 
-## QuickStart (Recommended)
-
 This is the fastest way to get started using your own data:
 
 1. **Segmentation**  
