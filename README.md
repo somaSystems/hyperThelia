@@ -73,19 +73,20 @@ Everything runs in the cloud with GPU acceleration—no local install needed.
 
 ## QuickStart (Recommended)
 
-<p align="center">
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_1.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open segmentation notebook in Colab"/> Segmentation
-  </a>
+This is the fastest way to get started using your own data:
 
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_2.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open tracking notebook in Colab"/> Tracking
-  </a>
+1. [**Segmentation**](https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_1.ipynb)  
+   Run 3D segmentation on your TIFFs using Cellpose-SAM.
 
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_3.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open measurement notebook in Colab"/> Measurement
-  </a>
-</p>
+2. [**Tracking**](https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_2.ipynb)  
+   Track segmented objects over time using centroid matching.
+
+3. [**Measurement**](https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_3.ipynb)  
+   Measure shape, position, and intensity features.
+
+Each notebook runs independently but is designed to run in sequence.  
+All results are saved inside the `outputs/` folder.
+
 
 This is the fastest way to get started using your own data.
 
