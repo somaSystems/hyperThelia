@@ -315,7 +315,7 @@ measurevisualise.export_measurement_values_as_tiff(
 ## 6. License and Authors
 
 **License**  
-MIT License or project-specific terms (to be specified)
+MIT License and project specifc licences (see Licence docs at top)
 
 **Authors**  
 Developed by **Lucas Dent** and **Mallica Pandya**  
