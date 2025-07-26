@@ -3,13 +3,12 @@
 </p>
 
 <p align="center">
-  <b>Try HyperThelia instantly in Google Colab:</b><br/>
+  Run the full 3D pipeline in Google Colab:<br/>
   <a href="https://bit.ly/hyperthelia-demo" target="_blank">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run HyperThelia Demo in Colab"/>
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run in Colab"/>
     Run in Colab
   </a><br/>
-  <em>Runs with one click. No setup.<br/>
-  In Colab: <strong>Runtime → Change runtime type → T4 GPU</strong></em>
+  <em>No setup needed. Just enable a T4 GPU: <strong>Runtime → Change runtime type → T4 GPU</strong></em>
 </p>
 
 ---
