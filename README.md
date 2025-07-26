@@ -1,15 +1,13 @@
 <p align="center">
-  <img src="hyper_thelia.png" alt="HyperThelia Logo" width="300"/>
+  <img src="HyperThelia_Logo.png" alt="HyperThelia Logo" width="300"/>
 </p>
 
 <p align="center">
   <b>Run HyperThelia on demo data in Colab:</b><br/>
-  <a href="https://bit.ly/hyperthelia-demo" target="_blank">
+  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb" target="_blank">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run in Colab"/>
   </a><br/><br/>
-  One click. No setup. In Colab:<br/>
-  1. <code>Runtime → Change runtime type → GPU (T4)</code><br/>
-  2. <code>Runtime → Run all</code>
+  No setup needed. Just click <code>Runtime → Run all</code>.
 </p>
 
 ---
