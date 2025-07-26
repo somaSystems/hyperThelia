@@ -19,7 +19,17 @@
 A modular, Google Colab-based pipeline for segmentation, tracking, and measurement of cells in 3D microscopy images.
 
 ---
+## What You Need
 
+Just your data.
+
+Place your raw 3D time-lapse TIFFs into a folder.  
+If it's a time series, split it into one `.tif` per timepoint:
+frame_0001.tif
+frame_0002.tif
+Everything else is handled by the pipeline.
+
+---
 ## Table of Contents
 
 1. [Run the Demo First](#run-the-demo-first)  
@@ -32,6 +42,18 @@ A modular, Google Colab-based pipeline for segmentation, tracking, and measureme
 8. [License and Authors](#6-license-and-authors)
 
 ---
+## Powered By
+
+HyperThelia builds on outstanding open-source tools for scientific image analysis:
+
+- [Cellpose-SAM](https://github.com/MouseLand/cellpose) – for 3D segmentation  
+- [TrackPy](https://soft-matter.github.io/trackpy/v0.5.0/) – for centroid-based tracking  
+- [scikit-image](https://scikit-image.org/) – `regionprops` and more for shape and intensity measurements
+
+Everything runs in the cloud with GPU acceleration—no local install needed.
+
+---
+
 
 ## Run the Demo First
 
@@ -96,16 +118,17 @@ Each notebook saves its results automatically in the `outputs/` folder inside yo
 Your working project directory should follow this layout:
 
 ```
-YourProjectName/
+YourProjectFolder/
 ├── raw_data/                          # Raw TIFF folders per experiment
-│   ├── ITB1cell3/
+│   ├── YourImages/                   # Just a folder of TIFFs
 │   │   ├── frame_0001.tif
+│   │   ├── frame_0002.tif
 │   │   └── ...
 │   └── AnotherExperiment/
 ├── notebooks/
-│   ├── hyperthelia_1.ipynb            # Segmentation
-│   ├── hyperthelia_2.ipynb            # Tracking
-│   ├── hyperthelia_3.ipynb            # Measurement
+│   ├── hyperthelia_1.ipynb           # Segmentation
+│   ├── hyperthelia_2.ipynb           # Tracking
+│   ├── hyperthelia_3.ipynb           # Measurement
 │   └── lib/
 │       ├── segmentation.py
 │       ├── tracking.py
@@ -122,6 +145,7 @@ YourProjectName/
 │       │   └── full_masks/
 │       └── measured/
 └── exports/                           # Optional: TIFFs colored by measurement values
+
 ```
 
 ---
