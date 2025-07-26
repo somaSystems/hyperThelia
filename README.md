@@ -63,10 +63,10 @@ Everything runs in the cloud with GPU acceleration—no local install needed.
 ## Run the Demo First
 
 <p align="center">
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open demo notebook in Colab"/> Run_Demo_hyperthelia.ipynb
+  <a href="https://bit.ly/hyperthelia-demo" target="_blank">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run in Colab"/> Run_Demo_hyperthelia.ipynb
   </a><br/>
-  <em>Just open in Colab and follow the steps inside—no setup required.</em>
+  Just open in Colab and follow the steps inside—no setup required.
 </p>
 
 ---
