@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  Try now — runs instantly in the cloud, no setup needed.
+  <strong>Try now — runs instantly in the cloud, no setup needed.</strong>
 </p>
 
 <p align="center">
