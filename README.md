@@ -50,7 +50,7 @@ Everything else is handled by the pipeline.
 ---
 ## Powered By
 
-HyperThelia builds on outstanding open-source tools for scientific image analysis:
+HyperThelia combines outstanding open-source tools for scientific image analysis:
 
 - [Cellpose-SAM](https://github.com/MouseLand/cellpose) – for 3D segmentation  
 - [TrackPy](https://soft-matter.github.io/trackpy/v0.5.0/) – for centroid-based tracking  
