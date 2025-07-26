@@ -19,7 +19,6 @@
 A modular, Google Colab-based pipeline for segmentation, tracking, and measurement of cells in 3D microscopy images.
 
 ---
----
 
 ## What You Need
 
