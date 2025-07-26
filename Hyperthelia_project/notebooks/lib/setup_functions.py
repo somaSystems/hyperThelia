@@ -27,17 +27,12 @@ def clone_hyperthelia_repo(clone_parent_dir):
     return clone_dir, base_project_dir
 
 
-def setup_project_io(base_project_dir, raw_dir=None):
+def setup_project_io(base_project_dir, raw_dir):
     """
-    Ensures output and raw input directories are set up correctly.
-    If raw_dir is None, defaults to data_demo inside the base project.
-    Returns: (raw_dir, outputs_dir)
+    Sets up output directory. raw_dir must be provided explicitly.
     """
     outputs_dir = base_project_dir / "outputs"
     outputs_dir.mkdir(exist_ok=True)
-
-    if raw_dir is None:
-        raw_dir = base_project_dir / "data_demo"
 
     if not raw_dir.exists():
         raise FileNotFoundError(f"Raw input folder not found: {raw_dir}")
@@ -45,4 +40,5 @@ def setup_project_io(base_project_dir, raw_dir=None):
     print(f"Project outputs will be saved to: {outputs_dir}")
     print(f"Looking for raw experiment folders in: {raw_dir}")
     return raw_dir, outputs_dir
+
 
