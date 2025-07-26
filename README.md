@@ -3,11 +3,13 @@
 </p>
 
 <p align="center">
-  <b>Run the HyperThelia 3D Pipeline on Google Colab:</b><br/>
-
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open demo notebook in Colab"/> Run Demo
-  </a>
+  <b>Try HyperThelia instantly in Google Colab:</b><br/>
+  <a href="https://bit.ly/hyperthelia-demo" target="_blank">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run HyperThelia Demo in Colab"/>
+    Run in Colab
+  </a><br/>
+  <em>Runs with one click. No setup.<br/>
+  In Colab: <strong>Runtime → Change runtime type → T4 GPU</strong></em>
 </p>
 
 ---
