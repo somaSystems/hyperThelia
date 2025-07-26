@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Hyperthelia.png" alt="HyperThelia Logo" width="300"/>
+  <img src="Hyper_thelia.png" alt="HyperThelia Logo" width="300"/>
 </p>
 
 <p align="center">
