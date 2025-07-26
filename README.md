@@ -19,15 +19,25 @@
 A modular, Google Colab-based pipeline for segmentation, tracking, and measurement of cells in 3D microscopy images.
 
 ---
+---
+
 ## What You Need
 
 Just your data.
 
 Place your raw 3D time-lapse TIFFs into a folder.  
 If it's a time series, split it into one `.tif` per timepoint:
-frame_0001.tif
-frame_0002.tif
+
+```
+frame_0001.tif  
+frame_0002.tif  
+...
+```
+
 Everything else is handled by the pipeline.
+
+---
+
 
 ---
 ## Table of Contents
