@@ -60,7 +60,6 @@ Everything runs in the cloud with GPU acceleration—no local install needed.
 
 ---
 
-
 ## Run the Demo First
 
 <p align="center">
