@@ -12,6 +12,8 @@ from pathlib import Path
 import ipywidgets as widgets
 from IPython.display import display, clear_output
 from tifffile import imread
+from typing import Union, List
+
 
 
 # ===  LIST AVAILABLE MEASUREMENT CSVs ===
