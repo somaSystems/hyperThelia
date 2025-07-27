@@ -1,5 +1,4 @@
 from pathlib import Path
-import sys
 from UsersDataDemo import choose_upload_method
 
 
@@ -19,11 +18,6 @@ def setup_hyperthelia_project(clone_dir: Path, raw_dir: Path = None, base_dir: P
         outputs_dir (Path): Output directory
     """
     base_project_dir = base_dir if base_dir is not None else clone_dir / "Hyperthelia_project"
-
-    # Add lib/ to path
-    lib_dir = base_project_dir / "notebooks" / "lib"
-    if str(lib_dir) not in sys.path:
-        sys.path.insert(0, str(lib_dir))
 
     # Choose or confirm raw_dir
     if raw_dir is None:
