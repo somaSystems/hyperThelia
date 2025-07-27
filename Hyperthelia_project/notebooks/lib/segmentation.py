@@ -33,7 +33,7 @@ def get_tiff_groups_by_experiment(raw_dir):
                  if f.suffix.lower() in [".tif", ".tiff"]]
         if tiffs:
             tiff_groups[exp_dir.name] = sorted(tiffs)
-            print(f"🧪 Found {len(tiffs)} TIFF(s) in {exp_dir.name}:")
+            print(f" Found {len(tiffs)} TIFF(s) in {exp_dir.name}:")
             for f in tiffs:
                 print(f"    {f.name}")
         else:
@@ -54,7 +54,7 @@ def get_pickle_groups_by_experiment(raw_dir):
         pickles = sorted(exp_dir.glob("segmented_*.pkl"))
         if pickles:
             pickle_groups[exp_dir.name] = pickles
-            print(f"🧪 Found {len(pickles)} PKL(s) in {exp_dir.name}:")
+            print(f" Found {len(pickles)} PKL(s) in {exp_dir.name}:")
             for f in pickles:
                 print(f"    {f.name}")
         else:

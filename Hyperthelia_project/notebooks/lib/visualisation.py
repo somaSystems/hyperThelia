@@ -75,7 +75,7 @@ def view_segmentation_slice_with_boundaries(
 
     exp_name = exp_names[exp_index]
     tiff_paths = experiments_dict[exp_name]
-    print(f"\n🩻 Viewing experiment: {exp_name}, timepoint {time_index}, Z-slice {z_slice}")
+    print(f"\n Viewing experiment: {exp_name}, timepoint {time_index}, Z-slice {z_slice}")
 
     if time_index >= len(tiff_paths):
         print(" Invalid time index.")
