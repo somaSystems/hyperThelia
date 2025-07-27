@@ -18,8 +18,8 @@ from typing import Union, List
 
 # ===  LIST AVAILABLE MEASUREMENT CSVs ===
 def list_available_measurement_csvs(base_dir: Path, return_first: bool = False) -> Union[Path, List[Path]]:
-    pattern = base_dir / "outputs" / "outputs_*/measured/regionprops_*_tracked.csv"
-    matches = sorted(base_dir.glob(str(pattern)))
+    pattern = "outputs/outputs_*/measured/regionprops_*_tracked.csv"
+    matches = sorted(base_dir.glob(pattern))
     
     if not matches:
         raise FileNotFoundError("No tracked measurement CSVs found.")
@@ -31,6 +31,7 @@ def list_available_measurement_csvs(base_dir: Path, return_first: bool = False) 
     for m in matches:
         print(f"- {m.relative_to(base_dir)}")
     return matches
+
 
 
 # ===  LOAD CSV-COUPLED DATA ===
