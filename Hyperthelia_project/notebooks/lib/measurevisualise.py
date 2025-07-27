@@ -21,14 +21,22 @@ def list_available_measurement_csvs(base_dir: Path):
         print(f"- {p.relative_to(base_dir)}")
 
 # ===  LOAD CSV-COUPLED DATA ===
-def get_image_paths_from_csv_path(csv_path: Path, base_dir: Path):
-    df = pd.read_csv(csv_path, nrows=1)
-    experiment_key = csv_path.stem.split("_")[1]
-    is_tracked = df.get("is_tracked", pd.Series([False])).iloc[0]
+def get_image_paths_from_csv_path(csv_path, base_dir):
+    """
+    Infers experiment folder and corresponding TIFF masks from the CSV filename.
+    Works with experiment names containing underscores.
+    """
+    from pathlib import Path
 
-    image_dir = base_dir / f"outputs/outputs_{experiment_key}" / (
-        "tracking/full_masks" if is_tracked else "raw_segmented_tiffs"
-    )
+    name = csv_path.stem  # e.g. regionprops_user_upload_tracked
+    if name.startswith("regionprops_") and name.endswith("_tracked"):
+        experiment_key = name.replace("regionprops_", "").replace("_tracked", "")
+    elif name.startswith("regionprops_"):
+        experiment_key = name.replace("regionprops_", "")
+    else:
+        raise ValueError(f"Cannot infer experiment name from: {name}")
+
+    image_dir = base_dir / f"outputs/outputs_{experiment_key}" / "tracking" / "full_masks"
     tif_paths = sorted(image_dir.glob("*.tif"))
 
     if not tif_paths:
