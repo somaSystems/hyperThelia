@@ -20,17 +20,16 @@ from typing import Union, List
 def list_available_measurement_csvs(base_dir: Path, return_first: bool = False) -> Union[Path, List[Path]]:
     pattern = "outputs/outputs_*/measured/regionprops_*_tracked.csv"
     matches = sorted(base_dir.glob(pattern))
-    
+
     if not matches:
         raise FileNotFoundError("No tracked measurement CSVs found.")
-    
+
     if return_first:
         return matches[0]
 
-    print("Available measurement CSVs:")
-    for m in matches:
-        print(f"- {m.relative_to(base_dir)}")
+    print(f"Found {len(matches)} measurement CSV(s).")
     return matches
+
 
 
 
