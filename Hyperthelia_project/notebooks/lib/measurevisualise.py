@@ -15,10 +15,21 @@ from tifffile import imread
 
 
 # ===  LIST AVAILABLE MEASUREMENT CSVs ===
-def list_available_measurement_csvs(base_dir: Path):
-    print("\n Available measurement CSVs:")
-    for p in sorted((base_dir / "outputs").glob("outputs_*/measured/regionprops_*.csv")):
-        print(f"- {p.relative_to(base_dir)}")
+def list_available_measurement_csvs(base_dir: Path, return_first: bool = False) -> Union[Path, List[Path]]:
+    pattern = base_dir / "outputs" / "outputs_*/measured/regionprops_*_tracked.csv"
+    matches = sorted(base_dir.glob(str(pattern)))
+    
+    if not matches:
+        raise FileNotFoundError("No tracked measurement CSVs found.")
+    
+    if return_first:
+        return matches[0]
+
+    print("Available measurement CSVs:")
+    for m in matches:
+        print(f"- {m.relative_to(base_dir)}")
+    return matches
+
 
 # ===  LOAD CSV-COUPLED DATA ===
 def get_image_paths_from_csv_path(csv_path, base_dir):
@@ -89,11 +100,16 @@ def export_measurement_values_as_tiff(
     base_dir: Path,
     timepoint: int,
     value_column: str,
-    output_dir: Path,
+    output_dir: Path = None,
     mode: str = "3d",
     z: int = None
 ):
     experiment_key, _, tif_paths = get_image_paths_from_csv_path(csv_path, base_dir)
+    
+    # Set default export folder to exports/exports_<experiment>/
+    if output_dir is None:
+        output_dir = base_dir / "exports" / f"exports_{experiment_key}"
+
     image_path = tif_paths[timepoint]
     df = pd.read_csv(csv_path)
     df_tp = df[df["timepoint"] == timepoint]
