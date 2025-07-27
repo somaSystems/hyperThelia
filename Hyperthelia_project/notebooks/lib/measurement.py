@@ -35,7 +35,7 @@ def summarise_experiment_data(experiment_data: dict) -> pd.DataFrame:
 
     print(f"\n Summary of discovered experiments")
     print(f" Total experiments: {len(summary_df)}")
-    print(f"🧮 Total TIFFs: {summary_df['n_tiffs'].sum()}\n")
+    print(f" Total TIFFs: {summary_df['n_tiffs'].sum()}\n")
 
     return summary_df
 
@@ -182,10 +182,10 @@ def run_all_measurements(
                 continue
             intensity_dict[channel_name] = tiff_paths
 
-        print(f"🧪 Found intensity channels: {list(intensity_dict.keys())}")
+        print(f" Found intensity channels: {list(intensity_dict.keys())}")
 
     for experiment_name, data in experiment_data.items():
-        print(f"\n🧪 Measuring experiment: {experiment_name}")
+        print(f"\n Measuring experiment: {experiment_name}")
         df = measure_experiment(
             experiment_name,
             data,
