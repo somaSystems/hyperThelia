@@ -298,12 +298,11 @@ def interactive_measurement_viewer(
                     timepoint_selector.value = 0
                     timepoint_selector.disabled = False
 
-                # Z-slice handling
-                # Always enable Z-slice (controlled by TIFF, not CSV)
-		    z_selector.disabled = False
-		    z_selector.max = 0  # Will be used as-is in view_by_csv()
-		    z_selector.value = 0
-      
+                # Z-slice handling — always enable (TIFF-controlled)
+                z_selector.disabled = False
+                z_selector.max = 0  # Will be used as-is in view_by_csv()
+                z_selector.value = 0
+
                 # Measurement options — only numeric columns
                 exclude_cols = {
                     "label_id", "timepoint", "Zslice", "CellName", "experiment",
@@ -351,6 +350,5 @@ def interactive_measurement_viewer(
     display(widgets.VBox([control_row, control_row2, output_box]))
 
     # Trigger initial update
-    # Let the dropdown's value fire update_fields → update_plot
-    csv_dropdown.value = csv_dropdown.options[0]  # Set explicitly if needed
+    csv_dropdown.value = csv_dropdown.options[0]
 
