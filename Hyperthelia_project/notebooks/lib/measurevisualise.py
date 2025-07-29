@@ -1,21 +1,3 @@
-# measurevisualise.py
-
-import numpy as np
-import pandas as pd
-import tifffile
-import matplotlib.pyplot as plt
-from matplotlib import cm
-from matplotlib.colors import Normalize
-from skimage.segmentation import find_boundaries
-from pathlib import Path
-
-import ipywidgets as widgets
-from IPython.display import display, clear_output
-from tifffile import imread
-from typing import Union, List
-
-# measurevisualise.py
-
 import numpy as np
 import pandas as pd
 import tifffile
@@ -82,8 +64,11 @@ def view_by_csv(csv_path: Path, base_dir: Path, timepoint: int, z: int, value_co
     print(f"   CSV path: {csv_path}")
 
     volume = tifffile.imread(image_path)
-    labels = volume[z]
+    if z < 0 or z >= volume.shape[0]:
+        print(f"⚠️ Z index {z} is out of bounds. Image has {volume.shape[0]} slices.")
+        return
 
+    labels = volume[z]
     label_map = dict(zip(df_tp["label_id"], df_tp[value_column]))
 
     colored_img = np.zeros((*labels.shape, 3), dtype=float)
@@ -92,8 +77,16 @@ def view_by_csv(csv_path: Path, base_dir: Path, timepoint: int, z: int, value_co
 
     values = [label_map.get(lbl, None) for lbl in unique_labels]
 
+    if not values or all(v is None for v in values):
+        print(f"⚠️ No values found to display for Z-slice {z}. Showing empty background.")
+        fig, ax = plt.subplots(figsize=(6, 6))
+        ax.imshow(np.zeros_like(labels), cmap="gray")
+        ax.set_title(f"TP {timepoint}, Z {z} — no labels")
+        ax.axis('off')
+        plt.show()
+        return
+
     if all(isinstance(v, (int, float, np.number)) for v in values if v is not None):
-        # numeric
         vals = np.array([label_map.get(lbl, 0) for lbl in labels.flat]).reshape(labels.shape)
         vmin, vmax = np.nanmin(values), np.nanmax(values)
         norm = Normalize(vmin=vmin, vmax=vmax)
@@ -104,7 +97,6 @@ def view_by_csv(csv_path: Path, base_dir: Path, timepoint: int, z: int, value_co
             colored_img[labels == lbl] = color
         colorbar = cm.ScalarMappable(norm=norm, cmap=colormap)
     else:
-        # categorical
         unique_vals = sorted(set(v for v in values if v is not None))
         cmap = plt.get_cmap("tab20", len(unique_vals))
         val_to_color = {v: cmap(i)[:3] for i, v in enumerate(unique_vals)}
@@ -181,8 +173,11 @@ def interactive_measurement_viewer(
                     timepoint_selector.value = 0
                     timepoint_selector.disabled = False
 
+                # Detect number of Z-slices from corresponding TIFF
+                experiment_key, _, tif_paths = get_image_paths_from_csv_path(csv_path_val, output_base_dir)
+                sample_stack = tifffile.imread(tif_paths[0])
                 z_selector.disabled = False
-                z_selector.max = 30
+                z_selector.max = sample_stack.shape[0] - 1
                 z_selector.value = 0
 
                 exclude_cols = {
@@ -221,7 +216,6 @@ def interactive_measurement_viewer(
     display(widgets.VBox([control_row, control_row2, output_box]))
     update_fields()
     csv_dropdown.value = csv_dropdown.options[0]
-
 
 
 # ===  EXPORT MEASURE-LABELED TIFF ===
