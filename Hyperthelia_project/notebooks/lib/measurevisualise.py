@@ -59,28 +59,31 @@ def list_available_measurement_csvs(base_dir, return_first=True, use_dropdown=Fa
 
 
 # ===  LOAD CSV-COUPLED DATA ===
+from pathlib import Path
+
 def get_image_paths_from_csv_path(csv_path, base_dir):
     """
-    Infers experiment folder and corresponding TIFF masks from the CSV filename.
-    Works with experiment names containing underscores.
+    Given a regionprops CSV path, return the experiment key and associated TIFF paths.
+    Assumes TIFFs are in: outputs_<experiment>/tracking/full_masks/propagated_t*.tif
     """
-    from pathlib import Path
+    # --- Extract experiment name robustly ---
+    name = csv_path.stem.replace("regionprops_", "")
+    for suffix in ["_tracked_2D", "_tracked_3D", "_tracked"]:
+        if name.endswith(suffix):
+            name = name[: -len(suffix)]
+    experiment_key = name
 
-    name = csv_path.stem  # e.g. regionprops_user_upload_tracked
-    if name.startswith("regionprops_") and name.endswith("_tracked"):
-        experiment_key = name.replace("regionprops_", "").replace("_tracked", "")
-    elif name.startswith("regionprops_"):
-        experiment_key = name.replace("regionprops_", "")
-    else:
-        raise ValueError(f"Cannot infer experiment name from: {name}")
-
-    image_dir = base_dir / f"outputs/outputs_{experiment_key}" / "tracking" / "full_masks"
-    tif_paths = sorted(image_dir.glob("*.tif"))
+    # --- Look for TIFFs under full_masks ---
+    full_masks_dir = base_dir / f"outputs_{experiment_key}" / "tracking" / "full_masks"
+    tif_paths = sorted(full_masks_dir.glob("propagated_t*.tif"))
 
     if not tif_paths:
-        raise FileNotFoundError(f"No TIFFs found for experiment {experiment_key} in {image_dir}")
+        raise FileNotFoundError(
+            f"No TIFFs found for experiment '{experiment_key}' in {full_masks_dir}"
+        )
 
-    return experiment_key, image_dir, tif_paths
+    return experiment_key, full_masks_dir, tif_paths
+
 
 # ===  VIEW BY CSV ===
 def view_by_csv(csv_path: Path, base_dir: Path, timepoint: int, z: int, value_column: str):
