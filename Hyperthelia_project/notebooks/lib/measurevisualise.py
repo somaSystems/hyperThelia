@@ -232,10 +232,15 @@ def export_measurement_values_as_tiff(
     mode: str = "3d",
     z: int = None
 ):
+    # Ensure csv_path is a Path object
+    if not isinstance(csv_path, Path):
+        csv_path = Path(csv_path)
+
     experiment_key, _, tif_paths = get_image_paths_from_csv_path(csv_path, base_dir)
 
+    # ✅ Correct relative export path
     if output_dir is None:
-        output_dir = base_dir / "exports" / f"exports_{experiment_key}"
+        output_dir = base_dir / "outputs" / f"outputs_{experiment_key}" / "image_exports"
 
     image_path = tif_paths[timepoint]
     df = pd.read_csv(csv_path)
@@ -278,7 +283,8 @@ def export_measurement_values_as_tiff(
     out_path = output_dir / output_name
 
     tifffile.imwrite(out_path, result)
-    print(f" Saved measurement TIFF: {out_path}")
+    print(f"✅ Saved measurement TIFF: {out_path}")
+
     
 def interactive_segmentation_viewer(output_base_dir):
     """Display segmented TIFFs interactively with slice selection."""
