@@ -84,7 +84,7 @@ def view_by_csv(csv_path: Path, base_dir: Path, timepoint: int, z: int, value_co
     experiment_key, image_dir, tif_paths = get_image_paths_from_csv_path(csv_path, base_dir)
     image_path = tif_paths[timepoint]
     df = pd.read_csv(csv_path)
-    df_tp = df[df["timepoint"] == timepoint]
+    df_tp = df[df["timepoint"] == timepoint] if "timepoint" in df.columns else df.copy()
 
     print(f"\n Viewing experiment: {experiment_key}")
     print(f"   Timepoint: {timepoint}, Z-Slice: {z}")
@@ -94,9 +94,14 @@ def view_by_csv(csv_path: Path, base_dir: Path, timepoint: int, z: int, value_co
 
     volume = tifffile.imread(image_path)
     labels = volume[z]
+
     label_map = dict(zip(df_tp["label_id"], df_tp[value_column]))
 
-    vmin, vmax = np.nanmin(list(label_map.values())), np.nanmax(list(label_map.values()))
+    values = list(label_map.values())
+    if not np.issubdtype(np.array(values).dtype, np.number):
+        raise ValueError(f"❌ Cannot color by non-numeric column: '{value_column}'")
+
+    vmin, vmax = np.nanmin(values), np.nanmax(values)
     norm = Normalize(vmin=vmin, vmax=vmax)
     colormap = cm.get_cmap("viridis")
 
@@ -117,6 +122,7 @@ def view_by_csv(csv_path: Path, base_dir: Path, timepoint: int, z: int, value_co
     ax.axis('off')
     fig.colorbar(cm.ScalarMappable(norm=norm, cmap=colormap), ax=ax, label=value_column)
     plt.show()
+
 
 # ===  EXPORT MEASURE-LABELED TIFF ===
 def export_measurement_values_as_tiff(
@@ -293,15 +299,11 @@ def interactive_measurement_viewer(
                     timepoint_selector.disabled = False
 
                 # Z-slice handling
-                if "Zslice" in cols:
-                    z_values = sorted(df["Zslice"].unique())
-                    z_selector.max = max(z_values)
-                    z_selector.disabled = False
-                else:
-                    z_selector.max = 0
-                    z_selector.value = 0
-                    z_selector.disabled = False
-
+                # Always enable Z-slice (controlled by TIFF, not CSV)
+		    z_selector.disabled = False
+		    z_selector.max = 0  # Will be used as-is in view_by_csv()
+		    z_selector.value = 0
+      
                 # Measurement options — only numeric columns
                 exclude_cols = {
                     "label_id", "timepoint", "Zslice", "CellName", "experiment",
