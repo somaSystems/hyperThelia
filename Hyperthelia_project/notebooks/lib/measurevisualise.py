@@ -68,17 +68,15 @@ def get_image_paths_from_csv_path(csv_path, base_dir):
             name = name[: -len(suffix)]
     experiment_key = name
 
-    # FIXED base path
-    full_masks_dir = base_dir / "outputs" / f"outputs_{experiment_key}" / "tracking" / "full_masks"
-    tif_paths = sorted(full_masks_dir.glob("propagated_t*.tif"))
+    full_masks_dir = base_dir / f"outputs_{experiment_key}" / "tracking" / "full_masks"
 
+    tif_paths = sorted(full_masks_dir.glob("propagated_t*.tif"))
     if not tif_paths:
         raise FileNotFoundError(
             f"No TIFFs found for experiment '{experiment_key}' in {full_masks_dir}"
         )
 
     return experiment_key, full_masks_dir, tif_paths
-
 
 
 # ===  VIEW BY CSV ===
