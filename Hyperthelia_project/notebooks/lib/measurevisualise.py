@@ -62,19 +62,14 @@ def list_available_measurement_csvs(base_dir, return_first=True, use_dropdown=Fa
 from pathlib import Path
 
 def get_image_paths_from_csv_path(csv_path, base_dir):
-    """
-    Given a regionprops CSV path, return the experiment key and associated TIFF paths.
-    Assumes TIFFs are in: outputs_<experiment>/tracking/full_masks/propagated_t*.tif
-    """
-    # --- Extract experiment name robustly ---
     name = csv_path.stem.replace("regionprops_", "")
     for suffix in ["_tracked_2D", "_tracked_3D", "_tracked"]:
         if name.endswith(suffix):
             name = name[: -len(suffix)]
     experiment_key = name
 
-    # --- Look for TIFFs under full_masks ---
-    full_masks_dir = base_dir / f"outputs_{experiment_key}" / "tracking" / "full_masks"
+    # FIXED base path
+    full_masks_dir = base_dir / "outputs" / f"outputs_{experiment_key}" / "tracking" / "full_masks"
     tif_paths = sorted(full_masks_dir.glob("propagated_t*.tif"))
 
     if not tif_paths:
@@ -83,6 +78,7 @@ def get_image_paths_from_csv_path(csv_path, base_dir):
         )
 
     return experiment_key, full_masks_dir, tif_paths
+
 
 
 # ===  VIEW BY CSV ===
