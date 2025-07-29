@@ -1,3 +1,5 @@
+# measurement.py
+
 import numpy as np
 import pandas as pd
 import tifffile
@@ -5,6 +7,8 @@ from skimage.measure import regionprops, marching_cubes
 from pathlib import Path
 from tqdm import tqdm
 import warnings
+import subprocess
+from datetime import datetime
 
 def discover_experiments(outputs_dir: Path, is_tracked: bool = True) -> dict:
     experiment_folders = sorted([p for p in outputs_dir.iterdir() if p.is_dir() and p.name.startswith("outputs_")])
@@ -37,6 +41,160 @@ def summarise_experiment_data(experiment_data: dict) -> pd.DataFrame:
 
     return summary_df
 
+def measure_experiment(
+    experiment_name: str,
+    data: dict,
+    is_tracked: bool,
+    compute_surface: bool = True,
+    intensity_dict: dict = None,
+    force: bool = False,
+    mode: str = "all"
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    results_3D = []
+    results_2D = []
+    tif_paths = data["tif_paths"]
+    n_tiffs = len(tif_paths)
+
+    if intensity_dict:
+        for channel, paths in intensity_dict.items():
+            if len(paths) != n_tiffs:
+                msg = f"Channel '{channel}' in experiment '{experiment_name}' has {len(paths)} intensity TIFFs but {n_tiffs} segmentation TIFFs."
+                if not force:
+                    raise ValueError(f" TIFF count mismatch. {msg}")
+                else:
+                    warnings.warn(f" {msg} Using only first {min(len(paths), n_tiffs)} frames.")
+
+    for t_idx, path in enumerate(tqdm(tif_paths, desc=f"   Timepoints for {experiment_name}")):
+        if intensity_dict:
+            intensity_frames = {
+                ch: tifffile.imread(paths[t_idx]) if t_idx < len(paths) else None
+                for ch, paths in intensity_dict.items()
+            }
+        else:
+            intensity_frames = {}
+
+        volume = tifffile.imread(path)
+
+        if mode in ["3D", "all"]:
+            labels = np.unique(volume)
+            labels = labels[labels != 0]
+
+            for label_id in tqdm(labels, leave=False, desc=f"   TP {t_idx}", mininterval=1.0, miniters=20):
+                mask = (volume == label_id).astype(np.uint8)
+                props = regionprops(mask)
+                if not props:
+                    continue
+                obj = props[0]
+
+                try:
+                    eigvals = np.sort(obj.inertia_tensor_eigvals)
+                    elongation = np.sqrt(1 - eigvals[0] / eigvals[2]) if eigvals[2] > 0 else np.nan
+                except:
+                    eigvals = [np.nan, np.nan, np.nan]
+                    elongation = np.nan
+
+                try:
+                    minor = obj.minor_axis_length
+                    aspect_ratio = obj.major_axis_length / minor if minor > 0 else np.nan
+                except:
+                    minor = np.nan
+                    aspect_ratio = np.nan
+
+                if compute_surface:
+                    try:
+                        verts, faces, _, _ = marching_cubes(mask, level=0)
+                        surface_area = sum(
+                            np.sqrt(max(0, s * (s - a) * (s - b) * (s - c)))
+                            for tri in faces
+                            for p0, p1, p2 in [(verts[tri[0]], verts[tri[1]], verts[tri[2]])]
+                            for a, b, c in [(np.linalg.norm(p1 - p0), np.linalg.norm(p2 - p1), np.linalg.norm(p0 - p2))]
+                            for s in [(a + b + c) / 2]
+                        )
+                    except:
+                        surface_area = np.nan
+                else:
+                    surface_area = np.nan
+
+                volume_voxels = obj.area
+                sphericity = (np.pi ** (1/3)) * ((6 * volume_voxels) ** (2/3)) / surface_area if surface_area > 0 else np.nan
+                centroid_z, centroid_y, centroid_x = obj.centroid
+                bbox = obj.bbox
+                major_axis_length = obj.major_axis_length
+
+                row = {
+                    'experiment': experiment_name,
+                    'label_id': label_id,
+                    'timepoint': t_idx,
+                    'filename': path.name,
+                    'source': str(data["mask_dir"].relative_to(data["exp_path"])),
+                    'is_tracked': is_tracked,
+                    'area_voxels': volume_voxels,
+                    'centroid_z': centroid_z,
+                    'centroid_y': centroid_y,
+                    'centroid_x': centroid_x,
+                    'bbox_zmin': bbox[0], 'bbox_ymin': bbox[1], 'bbox_xmin': bbox[2],
+                    'bbox_zmax': bbox[3], 'bbox_ymax': bbox[4], 'bbox_xmax': bbox[5],
+                    'major_axis_length': major_axis_length,
+                    'minor_axis_length': minor,
+                    'eigval1': eigvals[0], 'eigval2': eigvals[1], 'eigval3': eigvals[2],
+                    'elongation': elongation,
+                    'aspect_ratio': aspect_ratio,
+                    'surface_area': surface_area,
+                    'sphericity': sphericity,
+                    'valid_geometry': not any(np.isnan([centroid_z, centroid_y, centroid_x, volume_voxels, minor, aspect_ratio, *eigvals, elongation, sphericity, surface_area]))
+                }
+
+                for ch, img in intensity_frames.items():
+                    if img is not None:
+                        intensities = img[mask == 1]
+                        row[f'intensity_mean_{ch}'] = np.mean(intensities)
+                        row[f'intensity_max_{ch}'] = np.max(intensities)
+                        row[f'intensity_min_{ch}'] = np.min(intensities)
+                        row[f'intensity_std_{ch}'] = np.std(intensities)
+
+                results_3D.append(row)
+
+        if mode in ["2D", "all"]:
+            for z in range(volume.shape[0]):
+                slice_mask = volume[z]
+                props2D = regionprops(slice_mask)
+
+                for obj in props2D:
+                    row2D = {
+                        'experiment': experiment_name,
+                        'label_id': obj.label,
+                        'timepoint': t_idx,
+                        'Zslice': z,
+                        'filename': path.name,
+                        'source': str(data["mask_dir"].relative_to(data["exp_path"])),
+                        'is_tracked': is_tracked,
+                        'area_2D': obj.area,
+                        'solidity_2D': obj.solidity,
+                        'centroid_y': obj.centroid[0],
+                        'centroid_x': obj.centroid[1],
+                        'bbox_ymin': obj.bbox[0],
+                        'bbox_xmin': obj.bbox[1],
+                        'bbox_ymax': obj.bbox[2],
+                        'bbox_xmax': obj.bbox[3]
+                    }
+                    results_2D.append(row2D)
+
+    return pd.DataFrame(results_3D), pd.DataFrame(results_2D)
+
+def save_measurements(df3D: pd.DataFrame, df2D: pd.DataFrame, exp_path: Path, experiment_name: str, is_tracked: bool) -> None:
+    measured_dir = exp_path / "measured"
+    measured_dir.mkdir(exist_ok=True)
+
+    if not df3D.empty:
+        csv3D = measured_dir / f"regionprops_{experiment_name}_{'tracked' if is_tracked else 'untracked'}_3D.csv"
+        df3D.to_csv(csv3D, index=False)
+        print(f" Saved 3D: {csv3D}")
+
+    if not df2D.empty:
+        csv2D = measured_dir / f"regionprops_{experiment_name}_{'tracked' if is_tracked else 'untracked'}_2D.csv"
+        df2D.to_csv(csv2D, index=False)
+        print(f" Saved 2D: {csv2D}")
+
 def run_all_measurements(
     experiment_data: dict,
     is_tracked: bool,
@@ -44,7 +202,7 @@ def run_all_measurements(
     enable_intensity_measurement: bool = False,
     intensity_dir: Path = None,
     force: bool = False,
-    measure_mode: str = "all"  # options: "2D", "3D", or "all"
+    measure_mode: str = "all"
 ):
     intensity_dict = None
     if enable_intensity_measurement:
@@ -70,14 +228,7 @@ def run_all_measurements(
             is_tracked,
             compute_surface=compute_surface,
             intensity_dict=intensity_dict,
-            force=force
+            force=force,
+            mode=measure_mode
         )
-
-        if measure_mode == "3D":
-            df2D = pd.DataFrame()
-        elif measure_mode == "2D":
-            df3D = pd.DataFrame()
-        elif measure_mode != "all":
-            raise ValueError(f"Invalid measure_mode: {measure_mode}. Use '2D', '3D', or 'all'.")
-
         save_measurements(df3D, df2D, data["exp_path"], experiment_name, is_tracked)
