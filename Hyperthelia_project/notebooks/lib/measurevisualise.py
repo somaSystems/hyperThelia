@@ -1,3 +1,7 @@
+# File: notebooks/lib/measurevisualise.py
+# Purpose: View and export tracked segmentation TIFFs colored by measurement values (2D or 3D).
+# Supports both interactive (widget-based) and scripted viewing and exporting.
+
 import numpy as np
 import pandas as pd
 import tifffile
@@ -229,8 +233,7 @@ def export_measurement_values_as_tiff(
     z: int = None
 ):
     experiment_key, _, tif_paths = get_image_paths_from_csv_path(csv_path, base_dir)
-    
-    # Set default export folder to exports/exports_<experiment>/
+
     if output_dir is None:
         output_dir = base_dir / "exports" / f"exports_{experiment_key}"
 
@@ -238,23 +241,37 @@ def export_measurement_values_as_tiff(
     df = pd.read_csv(csv_path)
     df_tp = df[df["timepoint"] == timepoint]
 
-    label_map = dict(zip(df_tp["label_id"], df_tp[value_column]))
     volume = tifffile.imread(image_path)
-
-    def map_values(label_slice):
-        out = np.zeros_like(label_slice, dtype=np.float32)
-        for lbl in np.unique(label_slice):
-            if lbl == 0:
-                continue
-            out[label_slice == lbl] = label_map.get(lbl, 0)
-        return out
 
     if mode == "2d":
         if z is None:
             raise ValueError("Z index must be provided for 2D export.")
-        result = map_values(volume[z])
+
+        df_tp = df_tp[df_tp["Zslice"] == z]
+        label_map = dict(zip(df_tp["label_id"], df_tp[value_column]))
+
+        def map_slice(slice_labels):
+            out = np.zeros_like(slice_labels, dtype=np.float32)
+            for lbl in np.unique(slice_labels):
+                if lbl == 0:
+                    continue
+                out[slice_labels == lbl] = label_map.get(lbl, 0)
+            return out
+
+        result = map_slice(volume[z])
+
     else:
-        result = np.stack([map_values(volume[i]) for i in range(volume.shape[0])], axis=0)
+        label_map = dict(zip(df_tp["label_id"], df_tp[value_column]))
+
+        def map_slice(slice_labels):
+            out = np.zeros_like(slice_labels, dtype=np.float32)
+            for lbl in np.unique(slice_labels):
+                if lbl == 0:
+                    continue
+                out[slice_labels == lbl] = label_map.get(lbl, 0)
+            return out
+
+        result = np.stack([map_slice(volume[z_idx]) for z_idx in range(volume.shape[0])])
 
     output_dir.mkdir(parents=True, exist_ok=True)
     output_name = f"{experiment_key}_tp{timepoint}_{value_column}.tif"
@@ -262,63 +279,3 @@ def export_measurement_values_as_tiff(
 
     tifffile.imwrite(out_path, result)
     print(f" Saved measurement TIFF: {out_path}")
-
-# File: notebooks/lib/measurevisualise.py
-
-
-def interactive_segmentation_viewer(output_base_dir):
-    """Display segmented TIFFs interactively with slice selection."""
-    experiments = sorted([d for d in output_base_dir.glob("outputs_*") if d.is_dir()])
-    if not experiments:
-        print("❌ No experiments found in:", output_base_dir)
-        return
-
-    tiff_groups = {
-        exp.name: sorted((exp / "raw_segmented_tiffs").glob("*.tif"))
-        for exp in experiments
-    }
-
-    exp_input = widgets.BoundedIntText(
-        value=0, min=0, max=len(experiments) - 1, description='Experiment:'
-    )
-    tiff_input = widgets.BoundedIntText(value=0, min=0, max=0, description='Timepoint:')
-    z_input = widgets.BoundedIntText(value=0, min=0, max=0, description='Z-slice:')
-    output_box = widgets.Output()
-
-    def update_plot(*args):
-        with output_box:
-            clear_output(wait=True)
-            try:
-                exp = experiments[exp_input.value]
-                tiffs = tiff_groups[exp.name]
-                tiff_input.max = max(len(tiffs) - 1, 0)
-                selected_tiff = tiffs[tiff_input.value]
-                img = imread(selected_tiff)
-
-                if img.ndim != 3:
-                    print("❌ Not a 3D image.")
-                    return
-
-                z_input.max = img.shape[0] - 1
-                if z_input.value >= img.shape[0]:
-                    z_input.value = img.shape[0] // 2
-
-                plt.figure(figsize=(5, 5))
-                plt.imshow(img[z_input.value], cmap='nipy_spectral')
-                plt.title(f"{selected_tiff.name} — Z={z_input.value}")
-                plt.axis("off")
-                plt.show()
-
-            except Exception as e:
-                print(f"⚠️ Error: {e}")
-
-    # React to user input
-    exp_input.observe(update_plot, names='value')
-    tiff_input.observe(update_plot, names='value')
-    z_input.observe(update_plot, names='value')
-
-    # Display widgets and first view
-    display(widgets.HBox([exp_input, tiff_input, z_input]), output_box)
-    update_plot()
-
-
