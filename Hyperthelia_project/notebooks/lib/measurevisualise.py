@@ -177,7 +177,6 @@ def interactive_measurement_viewer(
                     timepoint_selector.value = 0
                     timepoint_selector.disabled = False
 
-                # Detect number of Z-slices from corresponding TIFF
                 experiment_key, _, tif_paths = get_image_paths_from_csv_path(csv_path_val, output_base_dir)
                 sample_stack = tifffile.imread(tif_paths[0])
                 z_selector.disabled = False
@@ -232,15 +231,13 @@ def export_measurement_values_as_tiff(
     mode: str = "3d",
     z: int = None
 ):
-    # Ensure csv_path is a Path object
     if not isinstance(csv_path, Path):
         csv_path = Path(csv_path)
 
     experiment_key, _, tif_paths = get_image_paths_from_csv_path(csv_path, base_dir)
 
-    # ✅ Correct relative export path
     if output_dir is None:
-        output_dir = base_dir / "outputs" / f"outputs_{experiment_key}" / "image_exports"
+        output_dir = base_dir / f"outputs_{experiment_key}" / "image_exports"
 
     image_path = tif_paths[timepoint]
     df = pd.read_csv(csv_path)
@@ -285,9 +282,9 @@ def export_measurement_values_as_tiff(
     tifffile.imwrite(out_path, result)
     print(f"✅ Saved measurement TIFF: {out_path}")
 
-    
+
+# === INTERACTIVE SEGMENTATION VIEWER ===
 def interactive_segmentation_viewer(output_base_dir):
-    """Display segmented TIFFs interactively with slice selection."""
     experiments = sorted([d for d in output_base_dir.glob("outputs_*") if d.is_dir()])
     if not experiments:
         print("❌ No experiments found in:", output_base_dir)
@@ -332,11 +329,10 @@ def interactive_segmentation_viewer(output_base_dir):
             except Exception as e:
                 print(f"⚠️ Error: {e}")
 
-    # React to user input
     exp_input.observe(update_plot, names='value')
     tiff_input.observe(update_plot, names='value')
     z_input.observe(update_plot, names='value')
 
-    # Display widgets and first view
     display(widgets.HBox([exp_input, tiff_input, z_input]), output_box)
     update_plot()
+
