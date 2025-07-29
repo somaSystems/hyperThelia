@@ -246,7 +246,7 @@ def interactive_measurement_viewer(
             csv_path = Path(csv_path)
         if not csv_path.is_absolute():
             csv_path = output_base_dir / csv_path
-        print("📌 Scripted mode: displaying specified measurement view")
+        print(" Scripted mode: displaying specified measurement view")
         view_by_csv(
             csv_path=csv_path,
             base_dir=output_base_dir,
@@ -257,7 +257,7 @@ def interactive_measurement_viewer(
         return
 
     # --- INTERACTIVE MODE ---
-    print("🧭 Interactive mode: use dropdowns to explore measurements")
+    print(" Interactive mode: use dropdowns to explore measurements")
     csv_paths = list_available_measurement_csvs(output_base_dir, return_first=False)
     if not csv_paths:
         print("❌ No tracked measurement CSVs found.")
@@ -343,22 +343,12 @@ def interactive_measurement_viewer(
     z_selector.observe(update_plot, names="value")
     measure_dropdown.observe(update_plot, names="value")
 
-    # Layout and launch
+    # Setup layout
     control_row = widgets.HBox([csv_dropdown])
     control_row2 = widgets.HBox([timepoint_selector, z_selector, measure_dropdown])
     display(widgets.VBox([control_row, control_row2, output_box]))
-    update_fields()
 
-
-    # React to changes
-    csv_dropdown.observe(update_fields, names="value")
-    timepoint_selector.observe(update_plot, names="value")
-    z_selector.observe(update_plot, names="value")
-    measure_dropdown.observe(update_plot, names="value")
-
-    # Layout and launch
-    control_row = widgets.HBox([csv_dropdown])
-    control_row2 = widgets.HBox([timepoint_selector, z_selector, measure_dropdown])
-    display(widgets.VBox([control_row, control_row2, output_box]))
-    update_fields()
+    # Trigger initial update
+    # Let the dropdown's value fire update_fields → update_plot
+    csv_dropdown.value = csv_dropdown.options[0]  # Set explicitly if needed
 
