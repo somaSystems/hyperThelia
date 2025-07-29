@@ -14,28 +14,26 @@ from IPython.display import display, clear_output
 from tifffile import imread
 from typing import Union, List
 
+# measurevisualise.py
 
+import numpy as np
+import pandas as pd
+import tifffile
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.colors import Normalize, ListedColormap
+from skimage.segmentation import find_boundaries
+from pathlib import Path
+
+import ipywidgets as widgets
+from IPython.display import display, clear_output
+from tifffile import imread
+from typing import Union, List
 
 # ===  LIST AVAILABLE MEASUREMENT CSVs ===
-from pathlib import Path
-import ipywidgets as widgets
-from IPython.display import display
-
 def list_available_measurement_csvs(base_dir, return_first=True, use_dropdown=False):
-    """
-    Search for 2D and 3D regionprops CSVs under outputs_<experiment>/measured/.
-    
-    Args:
-        base_dir (Path): Root directory to search.
-        return_first (bool): If True, return the first match. If False, return list.
-        use_dropdown (bool): If True, display dropdown for manual selection.
-    
-    Returns:
-        Path or list of Paths or None
-    """
     matches = list(base_dir.rglob("outputs_*/measured/regionprops_*_tracked_*.csv"))
     matches = sorted(matches)
-
     if not matches:
         raise FileNotFoundError("No tracked measurement CSVs found.")
 
@@ -43,11 +41,9 @@ def list_available_measurement_csvs(base_dir, return_first=True, use_dropdown=Fa
         options = [str(p) for p in matches]
         dropdown = widgets.Dropdown(options=options, description='Select CSV:')
         display(dropdown)
-
         def get_path():
             return Path(dropdown.value)
-
-        return get_path  # You must call this after selecting
+        return get_path
 
     if return_first:
         return matches[0]
@@ -55,12 +51,7 @@ def list_available_measurement_csvs(base_dir, return_first=True, use_dropdown=Fa
     return matches
 
 
-
-
-
 # ===  LOAD CSV-COUPLED DATA ===
-from pathlib import Path
-
 def get_image_paths_from_csv_path(csv_path, base_dir):
     name = csv_path.stem.replace("regionprops_", "")
     for suffix in ["_tracked_2D", "_tracked_3D", "_tracked"]:
@@ -69,13 +60,11 @@ def get_image_paths_from_csv_path(csv_path, base_dir):
     experiment_key = name
 
     full_masks_dir = base_dir / f"outputs_{experiment_key}" / "tracking" / "full_masks"
-
     tif_paths = sorted(full_masks_dir.glob("propagated_t*.tif"))
     if not tif_paths:
         raise FileNotFoundError(
             f"No TIFFs found for experiment '{experiment_key}' in {full_masks_dir}"
         )
-
     return experiment_key, full_masks_dir, tif_paths
 
 
@@ -97,21 +86,33 @@ def view_by_csv(csv_path: Path, base_dir: Path, timepoint: int, z: int, value_co
 
     label_map = dict(zip(df_tp["label_id"], df_tp[value_column]))
 
-    values = list(label_map.values())
-    if not np.issubdtype(np.array(values).dtype, np.number):
-        raise ValueError(f"❌ Cannot color by non-numeric column: '{value_column}'")
-
-    vmin, vmax = np.nanmin(values), np.nanmax(values)
-    norm = Normalize(vmin=vmin, vmax=vmax)
-    colormap = cm.get_cmap("viridis")
-
     colored_img = np.zeros((*labels.shape, 3), dtype=float)
-    for lbl in np.unique(labels):
-        if lbl == 0:
-            continue
-        val = label_map.get(lbl, vmin)
-        color = colormap(norm(val))[:3]
-        colored_img[labels == lbl] = color
+    unique_labels = np.unique(labels)
+    unique_labels = unique_labels[unique_labels != 0]
+
+    values = [label_map.get(lbl, None) for lbl in unique_labels]
+
+    if all(isinstance(v, (int, float, np.number)) for v in values if v is not None):
+        # numeric
+        vals = np.array([label_map.get(lbl, 0) for lbl in labels.flat]).reshape(labels.shape)
+        vmin, vmax = np.nanmin(values), np.nanmax(values)
+        norm = Normalize(vmin=vmin, vmax=vmax)
+        colormap = cm.get_cmap("viridis")
+        for lbl in unique_labels:
+            val = label_map.get(lbl, vmin)
+            color = colormap(norm(val))[:3]
+            colored_img[labels == lbl] = color
+        colorbar = cm.ScalarMappable(norm=norm, cmap=colormap)
+    else:
+        # categorical
+        unique_vals = sorted(set(v for v in values if v is not None))
+        cmap = plt.get_cmap("tab20", len(unique_vals))
+        val_to_color = {v: cmap(i)[:3] for i, v in enumerate(unique_vals)}
+        for lbl in unique_labels:
+            val = label_map.get(lbl, None)
+            color = val_to_color.get(val, (0, 0, 0))
+            colored_img[labels == lbl] = color
+        colorbar = None
 
     boundaries = find_boundaries(labels, mode='outer')
 
@@ -120,8 +121,107 @@ def view_by_csv(csv_path: Path, base_dir: Path, timepoint: int, z: int, value_co
     ax.contour(boundaries, levels=[0.5], colors='white', linewidths=0.5)
     ax.set_title(f"TP {timepoint}, Z {z} — colored by {value_column}")
     ax.axis('off')
-    fig.colorbar(cm.ScalarMappable(norm=norm, cmap=colormap), ax=ax, label=value_column)
+    if colorbar:
+        fig.colorbar(colorbar, ax=ax, label=value_column)
     plt.show()
+
+
+# === INTERACTIVE VIEWER ===
+def interactive_measurement_viewer(
+    output_base_dir: Path,
+    csv_path: Path = None,
+    timepoint: int = None,
+    z: int = None,
+    value_column: str = None
+):
+    if all(v is not None for v in [csv_path, timepoint, z, value_column]):
+        if not isinstance(csv_path, Path):
+            csv_path = Path(csv_path)
+        if not csv_path.is_absolute():
+            csv_path = output_base_dir / csv_path
+        print(" Scripted mode: displaying specified measurement view")
+        view_by_csv(
+            csv_path=csv_path,
+            base_dir=output_base_dir,
+            timepoint=timepoint,
+            z=z,
+            value_column=value_column
+        )
+        return
+
+    print(" Interactive mode: use dropdowns to explore measurements")
+    csv_paths = list_available_measurement_csvs(output_base_dir, return_first=False)
+    if not csv_paths:
+        print("❌ No tracked measurement CSVs found.")
+        return
+
+    csv_dropdown = widgets.Dropdown(
+        options=[str(p.relative_to(output_base_dir)) for p in csv_paths],
+        description="CSV File:"
+    )
+    timepoint_selector = widgets.IntSlider(description="TimePoint", min=0, max=0)
+    z_selector = widgets.IntSlider(description="Z-slice", min=0, max=0)
+    measure_dropdown = widgets.Dropdown(description="Measurement:", disabled=True)
+    output_box = widgets.Output()
+
+    def update_fields(*args):
+        with output_box:
+            clear_output(wait=True)
+            try:
+                csv_path_val = output_base_dir / csv_dropdown.value
+                df = pd.read_csv(csv_path_val)
+                cols = df.columns.tolist()
+
+                if "timepoint" in cols:
+                    timepoints = sorted(df["timepoint"].unique())
+                    timepoint_selector.max = max(timepoints)
+                    timepoint_selector.disabled = False
+                else:
+                    timepoint_selector.max = 0
+                    timepoint_selector.value = 0
+                    timepoint_selector.disabled = False
+
+                z_selector.disabled = False
+                z_selector.max = 30
+                z_selector.value = 0
+
+                exclude_cols = {
+                    "label_id", "timepoint", "Zslice", "CellName", "experiment",
+                    "filename", "Series", "image_path", "track_id"
+                }
+                value_measures = [c for c in df.columns if c not in exclude_cols]
+                measure_dropdown.options = value_measures
+                measure_dropdown.disabled = False
+
+            except Exception as e:
+                print(f"⚠️ Failed to read CSV or extract valid measurement columns: {e}")
+
+    def update_plot(*args):
+        with output_box:
+            clear_output(wait=True)
+            try:
+                selected_csv = output_base_dir / csv_dropdown.value
+                view_by_csv(
+                    csv_path=selected_csv,
+                    base_dir=output_base_dir,
+                    timepoint=timepoint_selector.value,
+                    z=z_selector.value,
+                    value_column=measure_dropdown.value
+                )
+            except Exception as e:
+                print(f"⚠️ Failed to display image: {e}")
+
+    csv_dropdown.observe(update_fields, names="value")
+    timepoint_selector.observe(update_plot, names="value")
+    z_selector.observe(update_plot, names="value")
+    measure_dropdown.observe(update_plot, names="value")
+
+    control_row = widgets.HBox([csv_dropdown])
+    control_row2 = widgets.HBox([timepoint_selector, z_selector, measure_dropdown])
+    display(widgets.VBox([control_row, control_row2, output_box]))
+    update_fields()
+    csv_dropdown.value = csv_dropdown.options[0]
+
 
 
 # ===  EXPORT MEASURE-LABELED TIFF ===
@@ -227,128 +327,4 @@ def interactive_segmentation_viewer(output_base_dir):
     display(widgets.HBox([exp_input, tiff_input, z_input]), output_box)
     update_plot()
 
-
-def interactive_measurement_viewer(
-    output_base_dir: Path,
-    csv_path: Path = None,
-    timepoint: int = None,
-    z: int = None,
-    value_column: str = None
-):
-    """
-    Launch interactive measurement viewer, or show a specific plot if arguments provided.
-    
-    Args:
-        output_base_dir (Path): Root directory, typically BASE_PROJECT_DIR / "outputs"
-        csv_path (Path, optional): Full path to a measurement CSV (relative or absolute)
-        timepoint (int, optional): Timepoint to display
-        z (int, optional): Z-slice to display
-        value_column (str, optional): Measurement to color by
-    """
-    
-    # --- SCRIPTED MODE ---
-    if all(v is not None for v in [csv_path, timepoint, z, value_column]):
-        if not isinstance(csv_path, Path):
-            csv_path = Path(csv_path)
-        if not csv_path.is_absolute():
-            csv_path = output_base_dir / csv_path
-        print(" Scripted mode: displaying specified measurement view")
-        view_by_csv(
-            csv_path=csv_path,
-            base_dir=output_base_dir,
-            timepoint=timepoint,
-            z=z,
-            value_column=value_column
-        )
-        return
-
-    # --- INTERACTIVE MODE ---
-    print(" Interactive mode: use dropdowns to explore measurements")
-    csv_paths = list_available_measurement_csvs(output_base_dir, return_first=False)
-    if not csv_paths:
-        print("❌ No tracked measurement CSVs found.")
-        return
-
-    # Widgets
-    csv_dropdown = widgets.Dropdown(
-        options=[str(p.relative_to(output_base_dir)) for p in csv_paths],
-        description="CSV File:"
-    )
-    timepoint_selector = widgets.IntSlider(description="TimePoint", min=0, max=0)
-    z_selector = widgets.IntSlider(description="Z-slice", min=0, max=0)
-    measure_dropdown = widgets.Dropdown(description="Measurement:", disabled=True)
-    output_box = widgets.Output()
-
-    def update_fields(*args):
-        with output_box:
-            clear_output(wait=True)
-
-            try:
-                csv_path_val = output_base_dir / csv_dropdown.value
-                df = pd.read_csv(csv_path_val)
-                cols = df.columns.tolist()
-
-                # TimePoint handling
-                if "timepoint" in cols:
-                    timepoints = sorted(df["timepoint"].unique())
-                    timepoint_selector.max = max(timepoints)
-                    timepoint_selector.disabled = False
-                else:
-                    timepoint_selector.max = 0
-                    timepoint_selector.value = 0
-                    timepoint_selector.disabled = False
-
-                # Z-slice handling — always enable (TIFF-controlled)
-                z_selector.disabled = False
-                z_selector.max = 0  # Will be used as-is in view_by_csv()
-                z_selector.value = 0
-
-                # Measurement options — only numeric columns
-                exclude_cols = {
-                    "label_id", "timepoint", "Zslice", "CellName", "experiment",
-                    "filename", "Series", "image_path", "track_id"
-                }
-                numeric_measures = [
-                    c for c in df.columns
-                    if c not in exclude_cols and pd.api.types.is_numeric_dtype(df[c])
-                ]
-
-                if not numeric_measures:
-                    raise ValueError("❌ No numeric measurement columns available to color by.")
-
-                measure_dropdown.options = numeric_measures
-                measure_dropdown.disabled = False
-
-            except Exception as e:
-                print(f"⚠️ Failed to read CSV or extract valid measurement columns: {e}")
-
-    def update_plot(*args):
-        with output_box:
-            clear_output(wait=True)
-
-            try:
-                selected_csv = output_base_dir / csv_dropdown.value
-                view_by_csv(
-                    csv_path=selected_csv,
-                    base_dir=output_base_dir,
-                    timepoint=timepoint_selector.value,
-                    z=z_selector.value,
-                    value_column=measure_dropdown.value
-                )
-            except Exception as e:
-                print(f"⚠️ Failed to display image: {e}")
-
-    # React to changes
-    csv_dropdown.observe(update_fields, names="value")
-    timepoint_selector.observe(update_plot, names="value")
-    z_selector.observe(update_plot, names="value")
-    measure_dropdown.observe(update_plot, names="value")
-
-    # Setup layout
-    control_row = widgets.HBox([csv_dropdown])
-    control_row2 = widgets.HBox([timepoint_selector, z_selector, measure_dropdown])
-    display(widgets.VBox([control_row, control_row2, output_box]))
-
-    # Trigger initial update
-    csv_dropdown.value = csv_dropdown.options[0]
 
