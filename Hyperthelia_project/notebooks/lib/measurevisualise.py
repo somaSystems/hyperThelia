@@ -17,18 +17,43 @@ from typing import Union, List
 
 
 # ===  LIST AVAILABLE MEASUREMENT CSVs ===
-def list_available_measurement_csvs(base_dir: Path, return_first: bool = False) -> Union[Path, List[Path]]:
-    pattern = "outputs/outputs_*/measured/regionprops_*_tracked.csv"
-    matches = sorted(base_dir.glob(pattern))
+from pathlib import Path
+import ipywidgets as widgets
+from IPython.display import display
+
+def list_available_measurement_csvs(base_dir, return_first=True, use_dropdown=False):
+    """
+    Search for 2D and 3D regionprops CSVs under outputs_<experiment>/measured/.
+    
+    Args:
+        base_dir (Path): Root directory to search.
+        return_first (bool): If True, return the first match. If False, return list.
+        use_dropdown (bool): If True, display dropdown for manual selection.
+    
+    Returns:
+        Path or list of Paths or None
+    """
+    matches = list(base_dir.rglob("outputs_*/measured/regionprops_*_tracked_*.csv"))
+    matches = sorted(matches)
 
     if not matches:
         raise FileNotFoundError("No tracked measurement CSVs found.")
 
+    if use_dropdown:
+        options = [str(p) for p in matches]
+        dropdown = widgets.Dropdown(options=options, description='Select CSV:')
+        display(dropdown)
+
+        def get_path():
+            return Path(dropdown.value)
+
+        return get_path  # You must call this after selecting
+
     if return_first:
         return matches[0]
 
-    print(f"Found {len(matches)} measurement CSV(s).")
     return matches
+
 
 
 
