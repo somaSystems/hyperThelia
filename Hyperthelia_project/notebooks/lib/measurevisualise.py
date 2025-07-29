@@ -246,7 +246,7 @@ def interactive_measurement_viewer(
             csv_path = Path(csv_path)
         if not csv_path.is_absolute():
             csv_path = output_base_dir / csv_path
-        print(" Scripted mode: displaying specified measurement view")
+        print("📌 Scripted mode: displaying specified measurement view")
         view_by_csv(
             csv_path=csv_path,
             base_dir=output_base_dir,
@@ -257,7 +257,7 @@ def interactive_measurement_viewer(
         return
 
     # --- INTERACTIVE MODE ---
-    print(" Interactive mode: use dropdowns to explore measurements")
+    print("🧭 Interactive mode: use dropdowns to explore measurements")
     csv_paths = list_available_measurement_csvs(output_base_dir, return_first=False)
     if not csv_paths:
         print("❌ No tracked measurement CSVs found.")
@@ -302,14 +302,24 @@ def interactive_measurement_viewer(
                     z_selector.value = 0
                     z_selector.disabled = False
 
-                # Measurement options
-                exclude_cols = {"label_id", "timepoint", "Zslice"}
-                measures = [c for c in cols if c not in exclude_cols]
-                measure_dropdown.options = measures
+                # Measurement options — only numeric columns
+                exclude_cols = {
+                    "label_id", "timepoint", "Zslice", "CellName", "experiment",
+                    "filename", "Series", "image_path", "track_id"
+                }
+                numeric_measures = [
+                    c for c in df.columns
+                    if c not in exclude_cols and pd.api.types.is_numeric_dtype(df[c])
+                ]
+
+                if not numeric_measures:
+                    raise ValueError("❌ No numeric measurement columns available to color by.")
+
+                measure_dropdown.options = numeric_measures
                 measure_dropdown.disabled = False
 
             except Exception as e:
-                print(f"⚠️ Failed to read CSV: {e}")
+                print(f"⚠️ Failed to read CSV or extract valid measurement columns: {e}")
 
     def update_plot(*args):
         with output_box:
@@ -326,6 +336,19 @@ def interactive_measurement_viewer(
                 )
             except Exception as e:
                 print(f"⚠️ Failed to display image: {e}")
+
+    # React to changes
+    csv_dropdown.observe(update_fields, names="value")
+    timepoint_selector.observe(update_plot, names="value")
+    z_selector.observe(update_plot, names="value")
+    measure_dropdown.observe(update_plot, names="value")
+
+    # Layout and launch
+    control_row = widgets.HBox([csv_dropdown])
+    control_row2 = widgets.HBox([timepoint_selector, z_selector, measure_dropdown])
+    display(widgets.VBox([control_row, control_row2, output_box]))
+    update_fields()
+
 
     # React to changes
     csv_dropdown.observe(update_fields, names="value")
