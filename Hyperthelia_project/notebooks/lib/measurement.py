@@ -1,5 +1,3 @@
-# measurement.py
-
 import numpy as np
 import pandas as pd
 import tifffile
@@ -35,17 +33,16 @@ def summarise_experiment_data(experiment_data: dict) -> pd.DataFrame:
 
     print(f"\n Summary of discovered experiments")
     print(f" Total experiments: {len(summary_df)}")
-    print(f"🧮 Total TIFFs: {summary_df['n_tiffs'].sum()}\n")
+    print(f" Total TIFFs: {summary_df['n_tiffs'].sum()}\n")
 
     return summary_df
 
-
-def measure_experiment(experiment_name: str, data: dict, is_tracked: bool, compute_surface: bool = True, intensity_dict: dict = None, force: bool = False) -> pd.DataFrame:
-    results = []
+def measure_experiment(experiment_name: str, data: dict, is_tracked: bool, compute_surface: bool = True, intensity_dict: dict = None, force: bool = False) -> (pd.DataFrame, pd.DataFrame):
+    results_3D = []
+    results_2D = []
     tif_paths = data["tif_paths"]
     n_tiffs = len(tif_paths)
 
-    # Setup intensity per-channel tiff paths
     if intensity_dict:
         for channel, paths in intensity_dict.items():
             if len(paths) != n_tiffs:
@@ -71,10 +68,8 @@ def measure_experiment(experiment_name: str, data: dict, is_tracked: bool, compu
         for label_id in tqdm(labels, leave=False, desc=f"   TP {t_idx}", mininterval=1.0, miniters=20):
             mask = (volume == label_id).astype(np.uint8)
             props = regionprops(mask)
-
             if not props:
                 continue
-
             obj = props[0]
 
             try:
@@ -135,7 +130,6 @@ def measure_experiment(experiment_name: str, data: dict, is_tracked: bool, compu
                 'valid_geometry': not any(np.isnan([centroid_z, centroid_y, centroid_x, volume_voxels, minor, aspect_ratio, *eigvals, elongation, sphericity, surface_area]))
             }
 
-            # Optional: add intensity stats
             for ch, img in intensity_frames.items():
                 if img is not None:
                     intensities = img[mask == 1]
@@ -144,18 +138,48 @@ def measure_experiment(experiment_name: str, data: dict, is_tracked: bool, compu
                     row[f'intensity_min_{ch}'] = np.min(intensities)
                     row[f'intensity_std_{ch}'] = np.std(intensities)
 
-            results.append(row)
+            results_3D.append(row)
 
-    return pd.DataFrame(results)
+        for z in range(volume.shape[0]):
+            slice_mask = volume[z]
+            props2D = regionprops(slice_mask)
 
-def save_measurements(df: pd.DataFrame, exp_path: Path, experiment_name: str, is_tracked: bool) -> Path:
+            for obj in props2D:
+                row2D = {
+                    'experiment': experiment_name,
+                    'label_id': obj.label,
+                    'timepoint': t_idx,
+                    'Zslice': z,
+                    'filename': path.name,
+                    'source': str(data["mask_dir"].relative_to(data["exp_path"])),
+                    'is_tracked': is_tracked,
+                    'area_2D': obj.area,
+                    'solidity_2D': obj.solidity,
+                    'centroid_y': obj.centroid[0],
+                    'centroid_x': obj.centroid[1],
+                    'bbox_ymin': obj.bbox[0],
+                    'bbox_xmin': obj.bbox[1],
+                    'bbox_ymax': obj.bbox[2],
+                    'bbox_xmax': obj.bbox[3],
+                    'valid_2D_geometry': not any(np.isnan([obj.area, obj.solidity, *obj.centroid]))
+                }
+                results_2D.append(row2D)
+
+    return pd.DataFrame(results_3D), pd.DataFrame(results_2D)
+
+def save_measurements(df3D: pd.DataFrame, df2D: pd.DataFrame, exp_path: Path, experiment_name: str, is_tracked: bool):
     measured_dir = exp_path / "measured"
     measured_dir.mkdir(exist_ok=True)
-    csv_path = measured_dir / f"regionprops_{experiment_name}_{'tracked' if is_tracked else 'untracked'}.csv"
-    df.to_csv(csv_path, index=False)
-    print(f" Saved: {csv_path}")
-    return csv_path
 
+    csv3D = measured_dir / f"regionprops_{experiment_name}_{'tracked' if is_tracked else 'untracked'}_3D.csv"
+    csv2D = measured_dir / f"regionprops_{experiment_name}_{'tracked' if is_tracked else 'untracked'}_2D.csv"
+
+    df3D.to_csv(csv3D, index=False)
+    df2D.to_csv(csv2D, index=False)
+
+    print(f" Saved 3D: {csv3D.name}")
+    print(f" Saved 2D: {csv2D.name}")
+    return csv3D, csv2D
 
 def run_all_measurements(
     experiment_data: dict,
@@ -165,9 +189,6 @@ def run_all_measurements(
     intensity_dir: Path = None,
     force: bool = False
 ):
-    """
-    Loop over all experiments, optionally loading intensity TIFFs per channel from folders.
-    """
     intensity_dict = None
     if enable_intensity_measurement:
         if intensity_dir is None:
@@ -182,11 +203,11 @@ def run_all_measurements(
                 continue
             intensity_dict[channel_name] = tiff_paths
 
-        print(f"🧪 Found intensity channels: {list(intensity_dict.keys())}")
+        print(f"Found intensity channels: {list(intensity_dict.keys())}")
 
     for experiment_name, data in experiment_data.items():
-        print(f"\n🧪 Measuring experiment: {experiment_name}")
-        df = measure_experiment(
+        print(f"\nMeasuring experiment: {experiment_name}")
+        df3D, df2D = measure_experiment(
             experiment_name,
             data,
             is_tracked,
@@ -194,4 +215,4 @@ def run_all_measurements(
             intensity_dict=intensity_dict,
             force=force
         )
-        save_measurements(df, data["exp_path"], experiment_name, is_tracked)
+        save_measurements(df3D, df2D, data["exp_path"], experiment_name, is_tracked)
