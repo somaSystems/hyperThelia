@@ -154,7 +154,7 @@ def measure_experiment(
 
                 results_3D.append(row)
 
-        if mode in ["2D", "all"]:
+               if mode in ["2D", "all"]:
             for z in range(volume.shape[0]):
                 slice_mask = volume[z]
                 props2D = regionprops(slice_mask)
@@ -177,9 +177,22 @@ def measure_experiment(
                         'bbox_ymax': obj.bbox[2],
                         'bbox_xmax': obj.bbox[3]
                     }
+
+                    # === NEW: add intensity measures for 2D ===
+                    if intensity_frames:
+                        for ch, img in intensity_frames.items():
+                            if img is not None:
+                                intensities = img[z][slice_mask == obj.label]
+                                if intensities.size > 0:
+                                    row2D[f"intensity_mean_{ch}"] = np.mean(intensities)
+                                    row2D[f"intensity_max_{ch}"]  = np.max(intensities)
+                                    row2D[f"intensity_min_{ch}"]  = np.min(intensities)
+                                    row2D[f"intensity_std_{ch}"]  = np.std(intensities)
+
                     results_2D.append(row2D)
 
     return pd.DataFrame(results_3D), pd.DataFrame(results_2D)
+
 
 def save_measurements(df3D: pd.DataFrame, df2D: pd.DataFrame, exp_path: Path, experiment_name: str, is_tracked: bool) -> None:
     measured_dir = exp_path / "measured"
