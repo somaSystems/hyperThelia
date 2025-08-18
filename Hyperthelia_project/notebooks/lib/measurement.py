@@ -191,7 +191,9 @@ def measure_experiment(
 
                     results_2D.append(row2D)
 
-        return pd.DataFrame(results_3D), pd.DataFrame(results_2D)
+    # === NEW === moved return out of the for-loop so ALL timepoints are processed
+    return pd.DataFrame(results_3D), pd.DataFrame(results_2D)
+
 
 
 
