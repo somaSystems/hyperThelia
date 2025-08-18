@@ -154,7 +154,7 @@ def measure_experiment(
 
                 results_3D.append(row)
 
-               if mode in ["2D", "all"]:
+        if mode in ["2D", "all"]:
             for z in range(volume.shape[0]):
                 slice_mask = volume[z]
                 props2D = regionprops(slice_mask)
@@ -191,7 +191,8 @@ def measure_experiment(
 
                     results_2D.append(row2D)
 
-    return pd.DataFrame(results_3D), pd.DataFrame(results_2D)
+        return pd.DataFrame(results_3D), pd.DataFrame(results_2D)
+
 
 
 def save_measurements(df3D: pd.DataFrame, df2D: pd.DataFrame, exp_path: Path, experiment_name: str, is_tracked: bool) -> None:
