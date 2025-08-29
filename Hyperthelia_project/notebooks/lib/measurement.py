@@ -248,3 +248,86 @@ def run_all_measurements(
             mode=measure_mode
         )
         save_measurements(df3D, df2D, data["exp_path"], experiment_name, is_tracked)
+        
+        # === NEW === discover base masks AND any region sets
+from pathlib import Path
+
+def discover_all_mask_sets(outputs_dir: Path, is_tracked: bool = True) -> dict:
+    """
+    Returns a single experiment_data dict covering:
+      - Base tracked/untracked masks: tracking/full_masks or raw_segmented_tiffs  (region='full_cell')
+      - Each derived region: tracking/regions/<region_name>  (region='<region_name>')
+
+    Keys are unique for saving:
+      '<exp>' for base, '<exp>__<region>' for regions.
+
+    Each value mirrors discover_experiments(...) and adds:
+      - 'region'  : 'full_cell' or the region folder name (e.g., 'cytoplasm', 'membrane')
+      - 'exp_base': base experiment name without the region suffix (e.g., 'demothelia')
+    """
+    outputs_dir = Path(outputs_dir)
+    out = {}
+    for exp_path in sorted([p for p in outputs_dir.iterdir() if p.is_dir() and p.name.startswith("outputs_")]):
+        exp = exp_path.name.replace("outputs_", "")
+
+        # 1) Base (full cells)
+        base_dir = exp_path / ("tracking/full_masks" if is_tracked else "raw_segmented_tiffs")
+        base_tifs = sorted(base_dir.glob("*.tif"))
+        if base_dir.exists() and base_tifs:
+            out[exp] = {
+                "mask_dir": base_dir,
+                "tif_paths": base_tifs,
+                "n_tiffs": len(base_tifs),
+                "exp_path": exp_path,
+                "region": "full_cell",
+                "exp_base": exp,
+            }
+
+        # 2) Region sets
+        regions_root = exp_path / "tracking" / "regions"
+        if regions_root.exists():
+            for rdir in sorted([d for d in regions_root.iterdir() if d.is_dir()]):
+                rtifs = sorted(rdir.glob("*.tif"))
+                if not rtifs:
+                    continue
+                rname = rdir.name
+                key = f"{exp}__{rname}"  # used for file names
+                out[key] = {
+                    "mask_dir": rdir,
+                    "tif_paths": rtifs,
+                    "n_tiffs": len(rtifs),
+                    "exp_path": exp_path,
+                    "region": rname,
+                    "exp_base": exp,
+                }
+    return out
+
+
+# === NEW === one-call helper: measure base + all regions
+def run_all_measurements_for_all_sets(
+    outputs_dir: Path,
+    is_tracked: bool,
+    compute_surface: bool = True,
+    enable_intensity_measurement: bool = False,
+    intensity_dir: Path = None,
+    force: bool = False,
+    measure_mode: str = "all"
+):
+    """
+    Convenience wrapper:
+      1) discover_all_mask_sets(...) to gather base + regions
+      2) summarise_experiment_data(...) for a quick printout
+      3) run_all_measurements(...) once with the combined dict
+    """
+    all_sets = discover_all_mask_sets(outputs_dir, is_tracked=is_tracked)
+    summarise_experiment_data(all_sets)
+    return run_all_measurements(
+        experiment_data=all_sets,
+        is_tracked=is_tracked,
+        compute_surface=compute_surface,
+        enable_intensity_measurement=enable_intensity_measurement,
+        intensity_dir=intensity_dir,
+        force=force,
+        measure_mode=measure_mode,
+    )
+
