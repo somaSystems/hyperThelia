@@ -340,43 +340,43 @@ def interactive_segmentation_viewer(output_base_dir):
     # === NEW === region-aware image path resolver (base + regions)
 from pathlib import Path
 
-#def get_image_paths_from_csv_path_regionaware(csv_path, base_dir):
-#    """
-#    Resolve the label TIFFs used by a measurement CSV.
-#
-#    Supports:
-#      - Base CSV names like: regionprops_<exp>_tracked_{2D,3D}.csv  → tracking/full_masks
-#      - Region CSV names like: regionprops_<exp>__<region>_tracked_{2D,3D}.csv  → tracking/regions/<region>/
-#    """
-#    csv_path = Path(csv_path)
-#    base_dir = Path(base_dir)
-#
-#    # Strip prefix and trailing tracked suffixes
-#    name = csv_path.stem.replace("regionprops_", "")
-#    for suffix in ["_tracked_2D", "_tracked_3D", "_tracked"]:
-#        if name.endswith(suffix):
-#            name = name[: -len(suffix)]
-#
-#    experiment_key = name
-#
-#    # Try base full_masks first
-#    full_masks_dir = base_dir / f"outputs_{experiment_key}" / "tracking" / "full_masks"
-#    tif_paths = sorted(full_masks_dir.glob("propagated_t*.tif"))
-#    if tif_paths:
-#        return experiment_key, full_masks_dir, tif_paths
-#
-#    # If that failed and we have a region-encoded key, switch to regions/<region>
-#    if "__" in experiment_key:
-#        base_exp, region = experiment_key.split("__", 1)
-#        region_dir = base_dir / f"outputs_{base_exp}" / "tracking" / "regions" / region
-#        tif_paths = sorted(region_dir.glob("propagated_t*.tif"))
-#        if tif_paths:
-#            return experiment_key, region_dir, tif_paths
-#
-#    # Still nothing — keep the original error style
-#    raise FileNotFoundError(
-#        f"No TIFFs found for experiment '{experiment_key}' under full_masks or regions."
-#    )
+def get_image_paths_from_csv_path_regionaware(csv_path, base_dir):
+    """
+    Resolve the label TIFFs used by a measurement CSV.
+
+    Supports:
+      - Base CSV names like: regionprops_<exp>_tracked_{2D,3D}.csv  → tracking/full_masks
+      - Region CSV names like: regionprops_<exp>__<region>_tracked_{2D,3D}.csv  → tracking/regions/<region>/
+    """
+    csv_path = Path(csv_path)
+    base_dir = Path(base_dir)
+
+    # Strip prefix and trailing tracked suffixes
+    name = csv_path.stem.replace("regionprops_", "")
+    for suffix in ["_tracked_2D", "_tracked_3D", "_tracked"]:
+        if name.endswith(suffix):
+            name = name[: -len(suffix)]
+
+    experiment_key = name
+
+    # Try base full_masks first
+    full_masks_dir = base_dir / f"outputs_{experiment_key}" / "tracking" / "full_masks"
+    tif_paths = sorted(full_masks_dir.glob("propagated_t*.tif"))
+    if tif_paths:
+        return experiment_key, full_masks_dir, tif_paths
+
+    # If that failed and we have a region-encoded key, switch to regions/<region>
+    if "__" in experiment_key:
+        base_exp, region = experiment_key.split("__", 1)
+        region_dir = base_dir / f"outputs_{base_exp}" / "tracking" / "regions" / region
+        tif_paths = sorted(region_dir.glob("propagated_t*.tif"))
+        if tif_paths:
+            return experiment_key, region_dir, tif_paths
+
+    # Still nothing — keep the original error style
+    raise FileNotFoundError(
+        f"No TIFFs found for experiment '{experiment_key}' under full_masks or regions."
+    )
 
 
 # region-aware CSV → image path resolver
