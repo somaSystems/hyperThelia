@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/raw_intensity/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb" target="_blank">
+<a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/regions/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb" target="_blank">
     Run on demo data  
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run demo in Colab"/>
   </a>
