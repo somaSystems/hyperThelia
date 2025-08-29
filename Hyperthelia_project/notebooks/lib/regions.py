@@ -20,10 +20,13 @@ def _erode_labels_2d(volume: np.ndarray, pixels: int) -> np.ndarray:
             m = (sl == lbl)
             if not m.any():
                 continue
-            eroded = binary_erosion(m, footprint=se1, iterations=pixels)
+            eroded = m.copy()
+            for _ in range(pixels):  # apply erosion N times
+                eroded = binary_erosion(eroded, footprint=se1)
             out_sl[eroded] = lbl
         out[z] = out_sl
     return out
+
 
 # ---- create cytoplasm by erosion ----
 def create_cytoplasm_masks(output_base_dir: Path, erosion_px: int = 4, region_name: str = "cytoplasm"):
