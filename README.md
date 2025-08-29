@@ -7,14 +7,14 @@
 </p>
 
 <p align="center">
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/HEAD/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb" target="_blank">
+  <a href="https://colab.research.google.com/github/somaSystems/hyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb" target="_blank">
     Run on demo data  
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run demo in Colab"/>
   </a>
 </p>
 
 <p align="center">
-  <a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/HEAD/Hyperthelia_project/notebooks/Run_Demo_YourData_hyperthelia.ipynb" target="_blank">
+  <a href="https://colab.research.google.com/github/somaSystems/hyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_YourData_hyperthelia.ipynb" target="_blank">
     Run on your data  
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run your data in Colab"/>
   </a>

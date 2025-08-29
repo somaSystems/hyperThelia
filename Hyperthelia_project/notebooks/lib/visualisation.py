@@ -187,45 +187,98 @@ def plot_tracked_centroids_xy_by_index(exp_index=0, output_base_dir=None):
     plt.show()
 
 def preview_propagated_labels_zslice(
-    exp_index=0,
-    z_slice=18,
-    timepoints=[0, 1, 2, 3, 4, 5],
+    exp_index: int = 0,
+    z_slice: int = 0,
+    timepoints: list[int] | None = None,
     output_base_dir=None,
-    cmap="nipy_spectral"
+    cmap: str = "nipy_spectral",
 ):
-    experiments = list(get_segmented_tiffs_by_experiment(output_base_dir).keys())
-    if exp_index >= len(experiments):
-        raise IndexError(f"Experiment index {exp_index} is out of range.")
+    """
+    Preview propagated label slices using ONLY lexicographic filename order.
+    - Timepoint = index in the sorted list of files (0..N-1).
+    - No parsing of numbers from filenames.
+    - No assumed frame count; everything is derived from what's in full_masks/.
+    - If `timepoints` is None, show all indices 0..N-1. If provided, out-of-range
+      indices are ignored with a note (no 'Missing:' per-file spam).
+    """
+    from pathlib import Path
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import tifffile as tiff
 
-    exp_name = experiments[exp_index]
-    tracking_dir = output_base_dir / f"outputs_{exp_name}" / "tracking"
-    full_mask_dir = tracking_dir / "full_masks"
+    if output_base_dir is None:
+        raise ValueError("output_base_dir is required")
 
+    output_base_dir = Path(output_base_dir)
+
+    # 1) Discover experiments (lexicographic by folder name)
+    experiments = sorted([p for p in output_base_dir.glob("outputs_*") if p.is_dir()], key=lambda p: p.name)
+    if not experiments:
+        print(f"No experiment folders found under: {output_base_dir}")
+        return
+
+    if exp_index < 0 or exp_index >= len(experiments):
+        raise IndexError(f"Experiment index {exp_index} is out of range (0..{len(experiments)-1}).")
+
+    exp_dir = experiments[exp_index]
+    exp_name = exp_dir.name.replace("outputs_", "")
+
+    # 2) Locate propagated volumes
+    full_mask_dir = exp_dir / "tracking" / "full_masks"
+    if not full_mask_dir.exists():
+        print(f"No full_masks directory found: {full_mask_dir}")
+        return
+
+    files = sorted(full_mask_dir.glob("propagated_*.tif"), key=lambda p: p.name)
+    if not files:
+        print(f"No propagated_*.tif files found in: {full_mask_dir}")
+        return
+
+    # 3) Decide which indices to show (purely by index in `files`)
+    all_indices = list(range(len(files)))
+    if timepoints is None:
+        selected_indices = all_indices
+    else:
+        selected_indices = [i for i in timepoints if 0 <= i < len(files)]
+        missing = [i for i in timepoints if i not in selected_indices]
+        if missing:
+            print(f"Note: ignoring out-of-range indices (0..{len(files)-1}): {sorted(set(missing))}")
+
+    if not selected_indices:
+        print("No matching frames to display after filtering.")
+        return
+
+    # 4) Load requested z-slices
     slices = []
-    for t in timepoints:
-        path = full_mask_dir / f"propagated_t{t:03d}.tif"
-        if not path.exists():
-            print(f" Missing: {path.name}")
+    used_idx = []
+    for idx in selected_indices:
+        path = files[idx]
+        vol = tiff.imread(str(path))
+        if z_slice < 0 or z_slice >= vol.shape[0]:
+            print(f"Z-slice {z_slice} out of bounds for {path.name} (depth {vol.shape[0]}). Skipping.")
             continue
-        volume = imread(path)
-        if z_slice >= volume.shape[0]:
-            print(f" Z-slice {z_slice} out of bounds for {path.name} with shape {volume.shape}")
-            continue
-        slices.append(volume[z_slice])
+        slices.append(vol[z_slice])
+        used_idx.append(idx)
 
     if not slices:
-        print(" No valid slices loaded.")
+        print("No valid slices loaded (all were out of bounds or unreadable).")
         return
 
     stack = np.stack(slices, axis=0)
     vmax = stack.max()
 
-    fig, axes = plt.subplots(1, len(slices), figsize=(3 * len(slices), 4))
+    # 5) Render
+    fig_count = len(slices)
+    fig, axes = plt.subplots(1, fig_count, figsize=(3 * fig_count, 4))
+    if fig_count == 1:
+        axes = [axes]
+
     for i, ax in enumerate(axes):
-        ax.imshow(stack[i], cmap=cmap, interpolation='nearest', vmin=0, vmax=vmax)
-        ax.set_title(f"t = {timepoints[i]}")
-        ax.axis('off')
+        ax.imshow(stack[i], cmap=cmap, interpolation="nearest", vmin=0, vmax=vmax)
+        ax.set_title(f"t = {used_idx[i]}")  # strictly the lexicographic index
+        ax.axis("off")
 
     plt.suptitle(f"Experiment: {exp_name} — Z = {z_slice}, Propagated Labels", fontsize=16)
     plt.tight_layout()
     plt.show()
+

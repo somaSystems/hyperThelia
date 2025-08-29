@@ -177,9 +177,25 @@ def measure_experiment(
                         'bbox_ymax': obj.bbox[2],
                         'bbox_xmax': obj.bbox[3]
                     }
+
+                    # === NEW: add intensity measures for 2D ===
+                    if intensity_frames:
+                        for ch, img in intensity_frames.items():
+                            if img is not None:
+                                intensities = img[z][slice_mask == obj.label]
+                                if intensities.size > 0:
+                                    row2D[f"intensity_mean_{ch}"] = np.mean(intensities)
+                                    row2D[f"intensity_max_{ch}"]  = np.max(intensities)
+                                    row2D[f"intensity_min_{ch}"]  = np.min(intensities)
+                                    row2D[f"intensity_std_{ch}"]  = np.std(intensities)
+
                     results_2D.append(row2D)
 
+    # === NEW === moved return out of the for-loop so ALL timepoints are processed
     return pd.DataFrame(results_3D), pd.DataFrame(results_2D)
+
+
+
 
 def save_measurements(df3D: pd.DataFrame, df2D: pd.DataFrame, exp_path: Path, experiment_name: str, is_tracked: bool) -> None:
     measured_dir = exp_path / "measured"
