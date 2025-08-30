@@ -3,11 +3,11 @@
 </p>
 
 <p align="center">
-  <strong>Try now - runs in the cloud, no setup needed.</strong>
+  <strong>Segment. Track. Measure.<br/>3D Cell Analysis in Google Colab</strong>
 </p>
 
 <p align="center">
-<a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/regions/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb" target="_blank">
+<a href="https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb" target="_blank">
     Run on demo data  
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run demo in Colab"/>
   </a>
@@ -15,309 +15,181 @@
 
 ---
 
-# HyperThelia: 3D Cell Segmentation, Tracking, and Measurement
+# HyperThelia
 
-A modular, Google Colab-based pipeline for segmentation, tracking, and measurement of cells in 3D microscopy images.
-
----
-
-## What You Need
-
-Just your data.
-
-Place your raw 3D time-lapse TIFFs into a folder.  
-If it's a time series, split it into one `.tif` per timepoint:
-
-```
-frame_0001.tif  
-frame_0002.tif  
-...
-```
-
-Everything else is handled by the pipeline.
-
----
-## Table of Contents
-
-1. [Run the Demo First](#run-the-demo-first)  
-2. [QuickStart (Recommended)](#quickstart-recommended)  
-3. [Project Structure](#1-project-structure)  
-4. [Initial Setup](#2-initial-setup)  
-5. [Segmentation](#3-segmentation)  
-6. [Tracking and Propagation](#4-tracking-and-propagation)  
-7. [Measurement and Export](#5-measurement-and-export)  
-8. [License and Authors](#6-license-and-authors)
-
----
-## Powered By
-
-HyperThelia combines outstanding open-source tools for scientific image analysis:
-
-- [Cellpose-SAM](https://github.com/MouseLand/cellpose) – for 3D segmentation  
-- [TrackPy](https://soft-matter.github.io/trackpy/v0.5.0/) – for centroid-based tracking  
-- [scikit-image](https://scikit-image.org/) – `regionprops` and more for shape and intensity measurements
-
-Everything runs in the cloud with GPU acceleration—no local install needed.
+HyperThelia is a modular, Google Colab-based pipeline for **3D timelapse cell image analysis**.  
+It runs segmentation, tracking, measurement, and visualisation with **no installation required**.
 
 ---
 
-## Run the Demo First
+## What It Does
 
-<p align="center">
-  <a href="https://bit.ly/hyperthelia-demo" target="_blank">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Run in Colab"/> Run_Demo_hyperthelia.ipynb
-  </a><br/>
-  Just open in Colab and follow the steps inside—no setup required.
-</p>
-
----
-
-## QuickStart (Recommended)
-
-This is the fastest way to get started using your own data:
-
-1. **Segmentation**  
-   [![Open segmentation notebook in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_1.ipynb)  
-   Run 3D segmentation on your TIFFs using Cellpose-SAM.
-
-2. **Tracking**  
-   [![Open tracking notebook in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_2.ipynb)  
-   Track segmented objects over time using centroid matching.
-
-3. **Measurement**  
-   [![Open measurement notebook in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/hyperthelia_3.ipynb)  
-   Measure shape, position, and intensity features.
-
-Each notebook runs independently but is designed to run in sequence.  
-All results are saved inside the `outputs/` folder.
-
-This is the fastest way to get started using your own data.
-
-1. **Download the entire project directory** from GitHub. It includes all necessary notebooks and folders.
-2. **Upload the whole directory to your Google Drive.**
-3. Open the first notebook (`hyperthelia_1.ipynb`) in **Google Colab**.
-4. In the first cell, **mount your Google Drive**:
-   ```python
-   from google.colab import drive
-   drive.mount('/content/drive')
-
-5. **Define the path to your project directory and raw data folder.**  
-   To do this:
-   - Use the file browser on the left side of Colab.
-   - Navigate to your uploaded folder.
-   - **Right-click and choose "Copy Path".**
-   - Paste this path into the code cell that defines `BASE_PROJECT_DIR` and `RAW_DATA_DIR`.
-
-   Example:
-   ```python
-   from pathlib import Path
-   BASE_PROJECT_DIR = Path("/content/drive/MyDrive/YourUploadedProjectFolder")
-   RAW_DATA_DIR = BASE_PROJECT_DIR / "raw_data"
-   ```
-6. **Run the first notebook from top to bottom.**
-7. When it finishes, run the second notebook: `hyperthelia_2.ipynb`.
-8. When that finishes, run the third notebook: `hyperthelia_3.ipynb`.
-
-Each notebook saves its results automatically in the `outputs/` folder inside your project directory.
+1. Takes **3D timelapse images** (TIFF stacks, one per timepoint)  
+2. **Segments** them into cells  
+3. **Tracks** cells consistently across time  
+4. **Defines regions** and IDs for each object  
+5. **Measures** shape and channel intensities  
+6. Provides **visualisation and TIFF export**
 
 ---
 
-## 1. Project Structure
+## To Use It
 
-Your working project directory should follow this layout:
+### 1. Connect to Google Colab
+Open the demo notebook:
 
-```
-YourProjectFolder/
-├── raw_data/                          # Raw TIFF folders per experiment
-│   ├── YourImages/                   # Just a folder of TIFFs
-│   │   ├── frame_0001.tif
-│   │   ├── frame_0002.tif
-│   │   └── ...
-│   └── AnotherExperiment/
-├── notebooks/
-│   ├── hyperthelia_1.ipynb           # Segmentation
-│   ├── hyperthelia_2.ipynb           # Tracking
-│   ├── hyperthelia_3.ipynb           # Measurement
-│   └── lib/
-│       ├── segmentation.py
-│       ├── tracking.py
-│       ├── propagation.py
-│       ├── measurement.py
-│       ├── visualisation.py
-│       └── measurevisualise.py
-├── outputs/
-│   └── outputs_<experiment>/
-│       ├── raw_segmented_tiffs/
-│       ├── raw_segmented_pickles/
-│       ├── tracking/
-│       │   ├── centroids/
-│       │   └── full_masks/
-│       └── measured/
-└── exports/                           # Optional: TIFFs colored by measurement values
-
+```markdown
+[Run the Demo in Colab](https://colab.research.google.com/github/somaSystems/HyperThelia/blob/main/Hyperthelia_project/notebooks/Run_Demo_hyperthelia.ipynb)
 ```
 
 ---
 
-## 2. Initial Setup
+### 2. Upload Your Data
 
-In each notebook, begin by mounting Google Drive:
+Upload **one TIFF per timepoint**:
 
-```python
-from google.colab import drive
-drive.mount('/content/drive')
+```
+my_experiment/
+ ├─ frame_0001.tif
+ ├─ frame_0002.tif
+ └─ frame_0003.tif
 ```
 
-Define your project directory and raw data folder using absolute paths:
+Optionally, add **raw intensity TIFFs** in parallel channel folders:
+
+```
+raw_intensity/
+ ├─ Channel1/frame_0001.tif ...
+ └─ Channel2/frame_0001.tif ...
+```
+
+---
+
+### 3. Tell the Notebook Where Your Data Is
+
+In the first Colab cell:
 
 ```python
 from pathlib import Path
-BASE_PROJECT_DIR = Path("/content/drive/MyDrive/YourUploadedProjectFolder")
-RAW_DATA_DIR = BASE_PROJECT_DIR / "raw_data"
-NOTEBOOK_DIR = BASE_PROJECT_DIR / "notebooks"
-OUTPUTS_DIR = BASE_PROJECT_DIR / "outputs"
+
+# Project clone location (auto-set in Colab)
+CLONE_DIR = Path("/content/HyperThelia")
+
+# Path to your segmentation TIFFs
+RAW_DIR = Path("/content/drive/MyDrive/my_experiment")
+
+# Path to optional intensity TIFFs
+RAW_INTENSITY_DIR = Path("/content/drive/MyDrive/raw_intensity")
 ```
 
 ---
 
-## 3. Segmentation
+## Running the Pipeline
 
-Notebook: `notebooks/hyperthelia_1.ipynb`  
-Module: `lib/segmentation.py`
+### 1. Segmentation
+```python
+from segmentation import run_segmentation_pipeline, setup_cellpose_model
 
-This step performs 3D segmentation using CellposeSAM.
-
-### Key Steps
-- Check paths and GPU availability
-- Load segmentation model
-- Configure segmentation parameters
-- Save labeled 3D masks and object data
-
-### Output Folders
+model = setup_cellpose_model(gpu=True)
+run_segmentation_pipeline(
+    RAW_DIR, OUTPUTS_DIR, model,
+    z_axis=0, channel_axis=None,
+    batch_size=32, do_3D=False, stitch_threshold=0.5
+)
 ```
-outputs/outputs_<experiment>/
-├── raw_segmented_tiffs/
-│   └── segmented_frame_0001.tif
-├── raw_segmented_pickles/
-│   └── segmented_frame_0001.pkl
-```
+
+**QC examples:**  
+![Volume Histogram](images/size_histogram.png)  
+![Segmentation Boundaries](images/boundaries.png)
 
 ---
 
-## 4. Tracking and Propagation
-
-Notebook: `notebooks/hyperthelia_2.ipynb`  
-Modules: `lib/tracking.py`, `propagation.py`, `visualisation.py`
-
-Tracks objects over time using centroid matching and propagates consistent labels.
-
-### Parameters
-
+### 2. Tracking
 ```python
-XY_UM = 0.325
-Z_UM = 1.0
-MAX_DIST_UM = 30
-MIN_VOLUME = 5000
-MAX_VOLUME = 150000
-EDGE_MARGIN = 1
-TRACKING_MODE = "nearest"
+import tracking, propagation
+
+tracking.run_tracking_pipeline(
+    output_base_dir=OUTPUTS_DIR,
+    xy_um=0.325, z_um=1.0, max_dist_um=20,
+    min_volume=5000, max_volume=80000,
+    edge_margin=1, tracking_mode="nearest"
+)
+
+propagation.run_propagation_pipeline(output_base_dir=OUTPUTS_DIR)
 ```
 
-### Workflow
-- Pre-tracking inspection:
-  ```python
-  plot_volume_histogram_for_experiment()
-  view_segmentation_slice_with_boundaries()
-  ```
-- Run tracking:
-  ```python
-  tracking.run_tracking_pipeline()
-  ```
-- Run label propagation:
-  ```python
-  propagation.run_propagation_pipeline()
-  ```
-
-### Outputs
-```
-outputs/outputs_<experiment>/tracking/
-├── tracked_objects.pkl
-├── centroids/centroids.csv
-└── full_masks/propagated_t0001.tif
-```
+**Tracking results:**  
+![Tracked Centroids](images/tracking_centroids.png)  
+![Propagated Labels](images/tracking_labels.png)
 
 ---
 
-## 5. Measurement and Export
-
-Notebook: `notebooks/hyperthelia_3.ipynb`  
-Modules: `lib/measurement.py`, `measurevisualise.py`
-
-Measures object shape, position, and optional intensity features from masks (tracked or untracked).
-
-### User Toggles
+### 3. Measurement
 ```python
-is_tracked = True
-compute_surface = True
-enable_intensity_measurement = True
-intensity_dir = BASE_PROJECT_DIR / "raw_intensity"
-force = False
-```
+import measurement
 
-### Run Measurement
-
-```python
-experiment_data = measurement.discover_experiments(OUTPUTS_DIR, is_tracked=is_tracked)
-measurement.summarise_experiment_data(experiment_data)
-
+experiment_data = measurement.discover_experiments(OUTPUTS_DIR, is_tracked=True)
 measurement.run_all_measurements(
     experiment_data=experiment_data,
-    is_tracked=is_tracked,
-    compute_surface=compute_surface,
-    enable_intensity_measurement=enable_intensity_measurement,
-    intensity_dir=intensity_dir,
-    force=force
+    is_tracked=True,
+    compute_surface=True,
+    enable_intensity_measurement=True,
+    intensity_dir=RAW_INTENSITY_DIR,
+    force=False
 )
 ```
 
-### Output CSVs
-
-Saved to:
-```
-outputs/outputs_<experiment>/measured/
-├── regionprops_<experiment>_tracked.csv
-```
-
-Each row = one object per timepoint  
-Includes:
-- Shape features: `volume`, `centroid`, `aspect_ratio`, `surface_area`
-- Intensity: `intensity_mean_<channel>`, `intensity_std_<channel>`
-- Validity flags (e.g. `valid_geometry`)
-
-### Optional TIFF Export
-```python
-measurevisualise.export_measurement_values_as_tiff(
-    csv_path=csv_path,
-    base_dir=BASE_PROJECT_DIR,
-    timepoint=0,
-    value_column="surface_area",
-    output_dir=BASE_PROJECT_DIR / "exports",
-    mode="3d",
-    z=18
-)
-```
-
-### NaN and Background
-- `NaN` values remain `NaN` in float32 TIFFs
-- Background is 0, so `NaN` is distinguishable for visualization
+**Example measurements:**  
+![Membrane Intensity](images/membrane_intensity.png)  
+![Cytoplasm Area](images/cytoplasm_area.png)
 
 ---
 
-## 6. License and Authors
+### 4. Visualisation
+Interactive viewer in Colab:
 
-**License**  
-MIT License and project specifc licences (see Licence docs at top)
+```python
+from measurevisualise import interactive_measurement_viewer
+interactive_measurement_viewer(OUTPUTS_DIR)
+```
 
-**Authors**  
+Export TIFFs colored by values:
+
+```python
+from measurevisualise import export_measurement_values_as_tiff
+
+csv_path = OUTPUTS_DIR / "outputs_my_experiment/measured/regionprops_my_experiment_tracked_3D.csv"
+export_measurement_values_as_tiff(
+    csv_path=csv_path,
+    base_dir=OUTPUTS_DIR,
+    timepoint=0,
+    value_column="area_voxels"
+)
+```
+
+---
+
+## Outputs
+
+All results are saved automatically under:
+
+```
+outputs/
+ └─ outputs_<experiment>/
+     ├─ raw_segmented_tiffs/
+     ├─ tracking/
+     │   ├─ centroids.csv
+     │   └─ full_masks/
+     └─ measured/
+         ├─ regionprops_<exp>_tracked_3D.csv
+         └─ regionprops_<exp>_tracked_2D.csv
+```
+
+---
+
+## License and Authors
+
+MIT License (see LICENSE file)  
+
 Developed by **Lucas Dent** and **Mallica Pandya**  
-Charras Lab.
+Charras Lab
