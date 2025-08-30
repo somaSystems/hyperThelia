@@ -22,6 +22,18 @@ It runs segmentation, tracking, measurement, and visualisation with **no install
 
 ---
 
+## Powered By
+
+HyperThelia combines outstanding open-source tools:
+
+- [Cellpose-SAM](https://github.com/MouseLand/cellpose) – 3D segmentation
+- [TrackPy](https://soft-matter.github.io/trackpy/v0.5.0/) – centroid-based tracking
+- [scikit-image](https://scikit-image.org/) – shape and intensity measurement
+
+These are linked together into an **easy-to-use, end-to-end pipeline** for 3D cell analysis.
+
+---
+
 ## What It Does
 
 1. Takes **3D timelapse images** (TIFF stacks, one per timepoint)  
