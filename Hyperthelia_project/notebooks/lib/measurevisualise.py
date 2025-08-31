@@ -145,6 +145,7 @@ def interactive_measurement_viewer(
         )
         return
 
+#View in notebook
     print(" Interactive mode: use dropdowns to explore measurements")
     csv_paths = list_available_measurement_csvs(output_base_dir, return_first=False)
     if not csv_paths:
@@ -184,8 +185,8 @@ def interactive_measurement_viewer(
                 z_selector.value = 0
 
                 exclude_cols = {
-                    "label_id", "timepoint", "Zslice", "CellName", "experiment",
-                    "filename", "Series", "image_path", "track_id"
+                    "timepoint", "Zslice", "CellName", "experiment",
+                    "filename", "Series", "image_path" 
                 }
                 value_measures = [c for c in df.columns if c not in exclude_cols]
                 measure_dropdown.options = value_measures
