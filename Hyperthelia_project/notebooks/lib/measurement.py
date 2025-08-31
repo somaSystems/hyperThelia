@@ -124,6 +124,7 @@ def measure_experiment(
                 row = {
                     'experiment': experiment_name,
                     'label_id': label_id,
+                    'track_id': int(label_id) if is_tracked else np.nan,
                     'timepoint': t_idx,
                     'filename': path.name,
                     'source': str(data["mask_dir"].relative_to(data["exp_path"])),
@@ -196,6 +197,7 @@ def measure_experiment(
                     row2D = {
                         'experiment': experiment_name,
                         'label_id': label_id,
+                        'track_id': int(label_id) if is_tracked else np.nan,
                         'timepoint': t_idx,
                         'Zslice': z,
                         'filename': path.name,
@@ -245,6 +247,10 @@ def measure_experiment(
                             lbl = getattr(obj, "label", None)
                             if lbl is None:
                                 continue
+                                # z-safety
+			    if z < 0 or z >= img.shape[0]:
+    				continue
+
                             pix = img[z][slice_mask == lbl]
                             if pix.size > 0:
                                 row2D[f"intensity_mean_{ch}"] = float(np.mean(pix))
