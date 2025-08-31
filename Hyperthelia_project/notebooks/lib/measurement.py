@@ -160,36 +160,92 @@ def measure_experiment(
                 props2D = regionprops(slice_mask)
 
                 for obj in props2D:
+                    # base fields (defensive reads)
+                    label_id   = getattr(obj, "label", np.nan)
+                    area_2D    = float(getattr(obj, "area", np.nan))
+                    solidity_2D= float(getattr(obj, "solidity", np.nan))
+                    cy, cx     = getattr(obj, "centroid", (np.nan, np.nan))
+                    by0, bx0, by1, bx1 = getattr(obj, "bbox", (np.nan, np.nan, np.nan, np.nan))
+
+                    # extra geometry (defensive reads)
+                    eccentricity        = float(getattr(obj, "eccentricity", np.nan))
+                    orientation         = float(getattr(obj, "orientation", np.nan))  # radians
+                    perimeter           = float(getattr(obj, "perimeter", np.nan))
+                    perimeter_crofton   = getattr(obj, "perimeter_crofton", np.nan)
+                    perimeter_crofton   = float(perimeter_crofton) if perimeter_crofton is not np.nan else np.nan
+                    major_axis_length   = float(getattr(obj, "major_axis_length", np.nan))
+                    minor_axis_length   = float(getattr(obj, "minor_axis_length", np.nan))
+                    convex_area         = float(getattr(obj, "convex_area", np.nan))
+                    extent              = float(getattr(obj, "extent", np.nan))
+                    filled_area         = float(getattr(obj, "filled_area", np.nan))
+
+                    # derived metrics
+                    equivalent_diameter = 2.0 * np.sqrt(area_2D / np.pi) if np.isfinite(area_2D) and area_2D > 0 else np.nan
+                    _P = perimeter_crofton if np.isfinite(perimeter_crofton) else perimeter
+                    circularity = (4.0 * np.pi * (area_2D / (_P * _P))) if (np.isfinite(area_2D) and np.isfinite(_P) and _P > 0) else np.nan
+                    roundness   = ((4.0 * area_2D) / (np.pi * (major_axis_length ** 2))) if (np.isfinite(area_2D) and np.isfinite(major_axis_length) and major_axis_length > 0) else np.nan
+
                     row2D = {
                         'experiment': experiment_name,
-                        'label_id': obj.label,
+                        'label_id': label_id,
                         'timepoint': t_idx,
                         'Zslice': z,
                         'filename': path.name,
                         'source': str(data["mask_dir"].relative_to(data["exp_path"])),
                         'is_tracked': is_tracked,
-                        'area_2D': obj.area,
-                        'solidity_2D': obj.solidity,
-                        'centroid_y': obj.centroid[0],
-                        'centroid_x': obj.centroid[1],
-                        'bbox_ymin': obj.bbox[0],
-                        'bbox_xmin': obj.bbox[1],
-                        'bbox_ymax': obj.bbox[2],
-                        'bbox_xmax': obj.bbox[3]
+
+                        # original basics
+                        'area_2D': area_2D,
+                        'solidity_2D': solidity_2D,
+                        'centroid_y': cy,
+                        'centroid_x': cx,
+                        'bbox_ymin': by0, 'bbox_xmin': bx0,
+                        'bbox_ymax': by1, 'bbox_xmax': bx1,
+
+                        # added geometry
+                        'eccentricity': eccentricity,
+                        'orientation': orientation,
+                        'perimeter': perimeter,
+                        'perimeter_crofton': _P if np.isfinite(perimeter_crofton) else np.nan,
+                        'major_axis_length': major_axis_length,
+                        'minor_axis_length': minor_axis_length,
+                        'convex_area': convex_area,
+                        'extent': extent,
+                        'filled_area': filled_area,
+                        'equivalent_diameter': equivalent_diameter,
+
+                        # derived
+                        'circularity': circularity,
+                        'roundness': roundness,
                     }
 
-                    # === NEW: add intensity measures for 2D ===
+                    # Hu moments (optional but useful)
+                    try:
+                        hu = getattr(obj, "moments_hu", None)
+                        if hu is not None and len(hu) == 7:
+                            for i in range(7):
+                                row2D[f"hu_moment_{i+1}"] = float(hu[i])
+                    except Exception:
+                        pass
+
+                    # intensity measures per channel (if provided)
                     if intensity_frames:
                         for ch, img in intensity_frames.items():
-                            if img is not None:
-                                intensities = img[z][slice_mask == obj.label]
-                                if intensities.size > 0:
-                                    row2D[f"intensity_mean_{ch}"] = np.mean(intensities)
-                                    row2D[f"intensity_max_{ch}"]  = np.max(intensities)
-                                    row2D[f"intensity_min_{ch}"]  = np.min(intensities)
-                                    row2D[f"intensity_std_{ch}"]  = np.std(intensities)
+                            if img is None:
+                                continue
+                            # use obj.label directly for the boolean mask (most robust)
+                            lbl = getattr(obj, "label", None)
+                            if lbl is None:
+                                continue
+                            pix = img[z][slice_mask == lbl]
+                            if pix.size > 0:
+                                row2D[f"intensity_mean_{ch}"] = float(np.mean(pix))
+                                row2D[f"intensity_max_{ch}"]  = float(np.max(pix))
+                                row2D[f"intensity_min_{ch}"]  = float(np.min(pix))
+                                row2D[f"intensity_std_{ch}"]  = float(np.std(pix))
 
                     results_2D.append(row2D)
+
 
     # === NEW === moved return out of the for-loop so ALL timepoints are processed
     return pd.DataFrame(results_3D), pd.DataFrame(results_2D)
