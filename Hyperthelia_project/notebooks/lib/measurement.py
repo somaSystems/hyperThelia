@@ -248,8 +248,8 @@ def measure_experiment(
                             if lbl is None:
                                 continue
                                 # z-safety
-			    if z < 0 or z >= img.shape[0]:
-    			        continue
+                            if z < 0 or z >= img.shape[0]:
+                                continue
                             pix = img[z][slice_mask == lbl]
                             if pix.size > 0:
                                 row2D[f"intensity_mean_{ch}"] = float(np.mean(pix))
