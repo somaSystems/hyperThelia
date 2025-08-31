@@ -180,7 +180,7 @@ def measure_experiment(
                     orientation         = float(getattr(obj, "orientation", np.nan))  # radians
                     perimeter           = float(getattr(obj, "perimeter", np.nan))
                     perimeter_crofton   = getattr(obj, "perimeter_crofton", np.nan)
-                    perimeter_crofton   = float(perimeter_crofton) if perimeter_crofton is not np.nan else np.nan
+                    perimeter_crofton   = float(perimeter_crofton) if np.isfinite(perimeter_crofton) else np.nan
                     major_axis_length   = float(getattr(obj, "major_axis_length", np.nan))
                     minor_axis_length   = float(getattr(obj, "minor_axis_length", np.nan))
                     convex_area         = float(getattr(obj, "convex_area", np.nan))
@@ -214,7 +214,7 @@ def measure_experiment(
                         'eccentricity': eccentricity,
                         'orientation': orientation,
                         'perimeter': perimeter,
-                        'perimeter_crofton': _P if np.isfinite(perimeter_crofton) else np.nan,
+                        'perimeter_crofton': perimeter_crofton,
                         'major_axis_length': major_axis_length,
                         'minor_axis_length': minor_axis_length,
                         'convex_area': convex_area,
