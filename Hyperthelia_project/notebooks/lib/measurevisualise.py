@@ -145,6 +145,7 @@ def interactive_measurement_viewer(
         )
         return
 
+#View in notebook
     print(" Interactive mode: use dropdowns to explore measurements")
     csv_paths = list_available_measurement_csvs(output_base_dir, return_first=False)
     if not csv_paths:
