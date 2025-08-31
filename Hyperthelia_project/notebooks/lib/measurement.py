@@ -161,17 +161,7 @@ def measure_experiment(
                         row[f'intensity_std_{ch}']  = float(np.std(intensities))
 
                 results_3D.append(row)
-
-                for ch, img in intensity_frames.items():
-                    if img is not None:
-                        intensities = img[mask == 1]
-                        row[f'intensity_mean_{ch}'] = np.mean(intensities)
-                        row[f'intensity_max_{ch}'] = np.max(intensities)
-                        row[f'intensity_min_{ch}'] = np.min(intensities)
-                        row[f'intensity_std_{ch}'] = np.std(intensities)
-
-                results_3D.append(row)
-
+           
         if mode in ["2D", "all"]:
             for z in range(volume.shape[0]):
                 slice_mask = volume[z]
