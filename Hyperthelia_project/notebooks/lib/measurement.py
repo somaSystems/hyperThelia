@@ -144,6 +144,24 @@ def measure_experiment(
                     'valid_geometry': not any(np.isnan([centroid_z, centroid_y, centroid_x, volume_voxels, minor, aspect_ratio, *eigvals, elongation, sphericity, surface_area]))
                 }
 
+                # Intensity measures for 3D (defensive; same style as 2D)
+                if intensity_frames:
+                    for ch, img in intensity_frames.items():
+                        if img is None:
+                            continue
+                        # safer: only if intensity volume matches label volume
+                        if img.shape != volume.shape:
+                            continue
+                        intensities = img[mask == 1]
+                        if intensities.size == 0:
+                            continue
+                        row[f'intensity_mean_{ch}'] = float(np.mean(intensities))
+                        row[f'intensity_max_{ch}']  = float(np.max(intensities))
+                        row[f'intensity_min_{ch}']  = float(np.min(intensities))
+                        row[f'intensity_std_{ch}']  = float(np.std(intensities))
+
+                results_3D.append(row)
+
                 for ch, img in intensity_frames.items():
                     if img is not None:
                         intensities = img[mask == 1]
@@ -249,7 +267,6 @@ def measure_experiment(
 
     # === NEW === moved return out of the for-loop so ALL timepoints are processed
     return pd.DataFrame(results_3D), pd.DataFrame(results_2D)
-
 
 
 
