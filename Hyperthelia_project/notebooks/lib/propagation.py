@@ -9,11 +9,15 @@ from tracking import get_segmented_tiffs_by_experiment
 
 # === LABEL PROPAGATION ===
 def propagate_labels(tracked_results, label_stack, output_dir):
+    from pathlib import Path
+    import numpy as np
+    import pandas as pd
+    from tifffile import imwrite
+
     output_dir = Path(output_dir)
     full_mask_dir = output_dir / "full_masks"
     centroid_mask_dir = output_dir / "centroid_labels"
     centroid_csv_dir = output_dir / "centroids"
-
     for d in [full_mask_dir, centroid_mask_dir, centroid_csv_dir]:
         d.mkdir(parents=True, exist_ok=True)
 
@@ -23,14 +27,15 @@ def propagate_labels(tracked_results, label_stack, output_dir):
         tracked_img = np.zeros_like(label_img, dtype=np.uint16)
         centroid_img = np.zeros_like(label_img, dtype=np.uint16)
 
-        for track_id, centroid in frame_tracks:
-            zc, yc, xc = np.round(centroid).astype(int)
+        for rec in frame_tracks:
+            if len(rec) == 3:
+                track_id, centroid, touches = rec
+            else:
+                track_id, centroid = rec
+                touches = 0
 
-            if not (
-                0 <= zc < label_img.shape[0] and
-                0 <= yc < label_img.shape[1] and
-                0 <= xc < label_img.shape[2]
-            ):
+            zc, yc, xc = np.round(centroid).astype(int)
+            if not (0 <= zc < label_img.shape[0] and 0 <= yc < label_img.shape[1] and 0 <= xc < label_img.shape[2]):
                 continue
 
             orig_label = label_img[zc, yc, xc]
@@ -41,16 +46,19 @@ def propagate_labels(tracked_results, label_stack, output_dir):
                 centroid_records.append({
                     "time": t,
                     "track_id": track_id,
-                    "z": centroid[0],
-                    "y": centroid[1],
-                    "x": centroid[2]
+                    "z": float(centroid[0]),
+                    "y": float(centroid[1]),
+                    "x": float(centroid[2]),
+                    "touches_boundary": int(touches)
                 })
 
         imwrite(full_mask_dir / f"propagated_t{t:03d}.tif", tracked_img)
         imwrite(centroid_mask_dir / f"centroid_t{t:03d}.tif", centroid_img)
 
+    import pandas as pd
     df = pd.DataFrame(centroid_records)
     df.to_csv(centroid_csv_dir / "centroids.csv", index=False)
+
 
     print("\u2705 Propagation complete.")
     print(f"\u2192 Full masks:       {full_mask_dir}")

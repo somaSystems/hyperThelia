@@ -119,6 +119,12 @@ def measure_experiment(
                 sphericity = (np.pi ** (1/3)) * ((6 * volume_voxels) ** (2/3)) / surface_area if surface_area > 0 else np.nan
                 centroid_z, centroid_y, centroid_x = obj.centroid
                 bbox = obj.bbox
+                touches_boundary = int(
+                    (bbox[0] == 0) or (bbox[1] == 0) or (bbox[2] == 0) or
+                    (bbox[3] == volume.shape[0]) or  # depth (Z)
+                    (bbox[4] == volume.shape[1]) or  # height (Y)
+                    (bbox[5] == volume.shape[2])     # width  (X)
+                )
                 major_axis_length = obj.major_axis_length
 
                 row = {
@@ -135,6 +141,7 @@ def measure_experiment(
                     'centroid_x': centroid_x,
                     'bbox_zmin': bbox[0], 'bbox_ymin': bbox[1], 'bbox_xmin': bbox[2],
                     'bbox_zmax': bbox[3], 'bbox_ymax': bbox[4], 'bbox_xmax': bbox[5],
+                    "touches_boundary": touches_boundary,
                     'major_axis_length': major_axis_length,
                     'minor_axis_length': minor,
                     'eigval1': eigvals[0], 'eigval2': eigvals[1], 'eigval3': eigvals[2],
@@ -167,6 +174,7 @@ def measure_experiment(
             for z in range(volume.shape[0]):
                 slice_mask = volume[z]
                 props2D = regionprops(slice_mask)
+                
 
                 for obj in props2D:
                     # base fields (defensive reads)
@@ -175,6 +183,11 @@ def measure_experiment(
                     solidity_2D= float(getattr(obj, "solidity", np.nan))
                     cy, cx     = getattr(obj, "centroid", (np.nan, np.nan))
                     by0, bx0, by1, bx1 = getattr(obj, "bbox", (np.nan, np.nan, np.nan, np.nan))
+                    h, w = slice_mask.shape
+                    if np.isfinite(by0) and np.isfinite(bx0) and np.isfinite(by1) and np.isfinite(bx1):
+                        touches_boundary_2D = int((by0 == 0) or (bx0 == 0) or (by1 == h) or (bx1 == w))
+                    else:
+                        touches_boundary_2D = 0  # or np.nan if you prefer
 
                     # extra geometry (defensive reads)
                     eccentricity        = float(getattr(obj, "eccentricity", np.nan))
@@ -211,6 +224,8 @@ def measure_experiment(
                         'centroid_x': cx,
                         'bbox_ymin': by0, 'bbox_xmin': bx0,
                         'bbox_ymax': by1, 'bbox_xmax': bx1,
+                        'touches_boundary': touches_boundary_2D,
+
 
                         # added geometry
                         'eccentricity': eccentricity,
