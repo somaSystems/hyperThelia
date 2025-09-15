@@ -61,9 +61,16 @@ def view_segmentation_slice_with_boundaries(
     experiments_dict=None,
     time_index=0,
     z_slice=18,
-    edge_margin=1,
+    edge_margin=0,            # not used for touching-only logic; kept for API compatibility
     cmap_name='viridis'
 ):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from tifffile import imread
+    from skimage.measure import regionprops
+    from skimage.segmentation import find_boundaries
+    from matplotlib import colormaps
+
     if experiments_dict is None:
         print(" No experiment data provided.")
         return
@@ -91,14 +98,17 @@ def view_segmentation_slice_with_boundaries(
     shape_y, shape_x = slice_labels.shape
     boundary_ids = set()
 
-    props = regionprops(label_img)
-    for p in props:
+    # TOUCHING-ONLY rule (bbox max* are EXCLUSIVE)
+    # Touches a face iff:
+    #   min* == 0  OR  max* == shape_*
+    for p in regionprops(label_img):
         minz, miny, minx, maxz, maxy, maxx = (*p.bbox[:3], *p.bbox[3:])
-        if (
-            minz <= edge_margin or maxz >= label_img.shape[0] - edge_margin - 1 or
-            miny <= edge_margin or maxy >= shape_y - edge_margin - 1 or
-            minx <= edge_margin or maxx >= shape_x - edge_margin - 1
-        ):
+        touches = (
+            (minz == 0) or (maxz == label_img.shape[0]) or
+            (miny == 0) or (maxy == shape_y) or
+            (minx == 0) or (maxx == shape_x)
+        )
+        if touches:
             boundary_ids.add(p.label)
 
     colored_img = np.zeros((*slice_labels.shape, 3), dtype=np.float32)
@@ -112,6 +122,7 @@ def view_segmentation_slice_with_boundaries(
             color = cmap(lbl / label_ids.max())[:3]
             colored_img[mask] = color
 
+    # Draw red edges only for touching labels
     for lbl in boundary_ids:
         mask = (slice_labels == lbl)
         edges = find_boundaries(mask, mode='inner')
@@ -123,6 +134,7 @@ def view_segmentation_slice_with_boundaries(
     plt.axis('off')
     plt.tight_layout()
     plt.show()
+
 
 # === POST-TRACKING QC ===
 def plot_tracked_centroids_xy_by_index(exp_index=0, output_base_dir=None):
