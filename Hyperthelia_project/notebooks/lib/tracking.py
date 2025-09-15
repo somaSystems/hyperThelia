@@ -45,24 +45,43 @@ def get_segmented_tiffs_by_experiment(output_base_dir):
     return experiment_groups
 
 # === TRACKING FUNCTIONS ===
+# === TRACKING FUNCTIONS ===
 def get_3d_centroids(label_img, size_range=(10000, 150000), edge_margin=1):
+    """
+    Return centroids for all size-valid objects AND a touches_boundary flag (0/1) per object.
+    NOTE: We do NOT exclude by boundary here; we only flag it. bbox max* are EXCLUSIVE.
+    """
+    import numpy as np
+    from skimage.measure import regionprops
+
     shape_z, shape_y, shape_x = label_img.shape
     props = regionprops(label_img)
+
     centroids = []
+    touches_flags = []
+
     for p in props:
         z, y, x = p.centroid
         minz, miny, minx, maxz, maxy, maxx = (*p.bbox[:3], *p.bbox[3:])
         volume = p.area
+
+        # Keep size filtering as before
         if not (size_range[0] <= volume <= size_range[1]):
             continue
-        if (
-            minz <= edge_margin or maxz >= shape_z - edge_margin - 1 or
-            miny <= edge_margin or maxy >= shape_y - edge_margin - 1 or
-            minx <= edge_margin or maxx >= shape_x - edge_margin - 1
-        ):
-            continue
+
+        # Touching = actually on a face (no padding). Because bbox max* are EXCLUSIVE:
+        # touching upper face => max* == shape_*
+        touches = int(
+            (minz == 0) or (maxz == shape_z) or
+            (miny == 0) or (maxy == shape_y) or
+            (minx == 0) or (maxx == shape_x)
+        )
+
         centroids.append((z, y, x))
-    return np.array(centroids)
+        touches_flags.append(touches)
+
+    return np.array(centroids), np.array(touches_flags, dtype=np.uint8)
+
 
 def scale_centroids_physically(centroids, xy_um=0.325, z_um=1.0):
     scaled = centroids.astype(float).copy()
@@ -79,45 +98,62 @@ def track_3d_centroids(label_stack,
                        z_um=1.0,
                        max_dist_um=30,
                        mode="nearest"):
+    from scipy.spatial.distance import cdist
+    from scipy.optimize import linear_sum_assignment
+    import numpy as np
+
     if mode != "nearest":
         raise NotImplementedError("Only 'nearest' mode is currently supported.")
 
     tracked = []
     id_counter = 1
 
-    prev_centroids = get_3d_centroids(label_stack[0], size_range, edge_margin)
+    # First frame
+    prev_centroids, prev_touches = get_3d_centroids(label_stack[0], size_range, edge_margin)
     prev_ids = list(range(id_counter, id_counter + len(prev_centroids)))
     id_counter += len(prev_centroids)
-    tracked.append(list(zip(prev_ids, prev_centroids)))
+    tracked.append(list(zip(prev_ids, prev_centroids, prev_touches)))
 
+    # Subsequent frames
     for t in range(1, len(label_stack)):
-        curr_centroids = get_3d_centroids(label_stack[t], size_range, edge_margin)
+        curr_centroids, curr_touches = get_3d_centroids(label_stack[t], size_range, edge_margin)
+
         if len(prev_centroids) == 0 or len(curr_centroids) == 0:
             tracked.append([])
             prev_centroids = curr_centroids
+            prev_touches = curr_touches
             prev_ids = []
             continue
+
+        # distance in physical units
         scaled_prev = scale_centroids_physically(prev_centroids, xy_um, z_um)
         scaled_curr = scale_centroids_physically(curr_centroids, xy_um, z_um)
+
         cost = cdist(scaled_prev, scaled_curr)
-        cost[cost > max_dist_um] = 1e6
+        cost[cost > max_dist_um] = 1e6  # gate
+
         row_ind, col_ind = linear_sum_assignment(cost)
+
         matched_ids = {}
         for i, j in zip(row_ind, col_ind):
             if cost[i, j] < 1e6:
                 matched_ids[j] = prev_ids[i]
+
         unmatched = [i for i in range(len(curr_centroids)) if i not in matched_ids]
         new_id_map = {i: id_counter + idx for idx, i in enumerate(unmatched)}
         id_counter += len(unmatched)
+
         curr_ids = []
         for i in range(len(curr_centroids)):
-            id_val = matched_ids.get(i, new_id_map.get(i))
-            curr_ids.append(id_val)
-        tracked.append(list(zip(curr_ids, curr_centroids)))
+            curr_ids.append(matched_ids.get(i, new_id_map.get(i)))
+
+        tracked.append(list(zip(curr_ids, curr_centroids, curr_touches)))
         prev_centroids = curr_centroids
+        prev_touches = curr_touches
         prev_ids = curr_ids
 
     return tracked
+
 
 # === SAVE AND LOAD ===
 in_memory_tracking = {}

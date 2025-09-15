@@ -9,6 +9,11 @@ from tracking import get_segmented_tiffs_by_experiment
 
 # === LABEL PROPAGATION ===
 def propagate_labels(tracked_results, label_stack, output_dir):
+    from pathlib import Path
+    import numpy as np
+    import pandas as pd
+    from tifffile import imwrite
+
     output_dir = Path(output_dir)
     full_mask_dir = output_dir / "full_masks"
     centroid_mask_dir = output_dir / "centroid_labels"
@@ -23,7 +28,14 @@ def propagate_labels(tracked_results, label_stack, output_dir):
         tracked_img = np.zeros_like(label_img, dtype=np.uint16)
         centroid_img = np.zeros_like(label_img, dtype=np.uint16)
 
-        for track_id, centroid in frame_tracks:
+        for rec in frame_tracks:
+            # Accept both (track_id, centroid) and (track_id, centroid, touches_flag)
+            if len(rec) == 3:
+                track_id, centroid, touches = rec
+            else:
+                track_id, centroid = rec
+                touches = 0
+
             zc, yc, xc = np.round(centroid).astype(int)
 
             if not (
@@ -41,9 +53,10 @@ def propagate_labels(tracked_results, label_stack, output_dir):
                 centroid_records.append({
                     "time": t,
                     "track_id": track_id,
-                    "z": centroid[0],
-                    "y": centroid[1],
-                    "x": centroid[2]
+                    "z": float(centroid[0]),
+                    "y": float(centroid[1]),
+                    "x": float(centroid[2]),
+                    "touches_boundary": int(touches)   # NEW column
                 })
 
         imwrite(full_mask_dir / f"propagated_t{t:03d}.tif", tracked_img)
@@ -52,10 +65,11 @@ def propagate_labels(tracked_results, label_stack, output_dir):
     df = pd.DataFrame(centroid_records)
     df.to_csv(centroid_csv_dir / "centroids.csv", index=False)
 
-    print("\u2705 Propagation complete.")
-    print(f"\u2192 Full masks:       {full_mask_dir}")
-    print(f"\u2192 Centroid masks:   {centroid_mask_dir}")
-    print(f"\u2192 Centroid CSV:     {centroid_csv_dir / 'centroids.csv'}")
+    print("✅ Propagation complete.")
+    print(f"→ Full masks:       {full_mask_dir}")
+    print(f"→ Centroid masks:   {centroid_mask_dir}")
+    print(f"→ Centroid CSV:     {centroid_csv_dir / 'centroids.csv'}")
+
 
 # === PIPELINE ===
 def run_propagation_pipeline(output_base_dir):
