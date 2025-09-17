@@ -62,7 +62,12 @@ def get_pickle_groups_by_experiment(raw_dir):
 
     return pickle_groups
 
-def segment_single_tiff(path, model, z_axis, channel_axis, batch_size, do_3D, stitch_threshold):
+def segment_single_tiff(
+    path, model, z_axis, channel_axis, batch_size, do_3D, stitch_threshold,
+    flow_threshold,                 # === NEW ===
+    cellprob_threshold,             # === NEW ===
+    tile_norm_blocksize             # === NEW ===
+):
     """
     Segments a single TIFF and returns the stitched mask.
     All segmentation parameters must be passed explicitly.
@@ -77,8 +82,12 @@ def segment_single_tiff(path, model, z_axis, channel_axis, batch_size, do_3D, st
         batch_size=batch_size,
         do_3D=do_3D,
         stitch_threshold=stitch_threshold,
+        flow_threshold=flow_threshold,                                 # === NEW ===
+        cellprob_threshold=cellprob_threshold,                         # === NEW ===
+        normalize={"tile_norm_blocksize": tile_norm_blocksize}         # === NEW ===
     )
     return masks_stitched
+
 
 def save_segmentation_pickle(path, mask, output_base_dir):
     experiment_name = path.parent.name
@@ -100,7 +109,12 @@ def save_segmentation_tiff(path, mask, output_base_dir):
     imwrite(output_dir / output_filename, mask.astype(np.uint16))  #  ensure uint16 for label masks
     print(f" Saved TIFF: {output_filename} to {output_dir}")
 
-def segment_and_save(tiff_paths, output_base_dir, model, z_axis, channel_axis, batch_size, do_3D, stitch_threshold):
+def segment_and_save(
+    tiff_paths, output_base_dir, model, z_axis, channel_axis, batch_size, do_3D, stitch_threshold,
+    flow_threshold,                 # === NEW ===
+    cellprob_threshold,             # === NEW ===
+    tile_norm_blocksize             # === NEW ===
+):
     print(f" Will now segment {len(tiff_paths)} TIFF file(s)...")
     for path in tiff_paths:
         mask = segment_single_tiff(
@@ -110,9 +124,13 @@ def segment_and_save(tiff_paths, output_base_dir, model, z_axis, channel_axis, b
             batch_size=batch_size,
             do_3D=do_3D,
             stitch_threshold=stitch_threshold,
+            flow_threshold=flow_threshold,               # === NEW ===
+            cellprob_threshold=cellprob_threshold,       # === NEW ===
+            tile_norm_blocksize=tile_norm_blocksize      # === NEW ===
         )
         save_segmentation_pickle(path, mask, output_base_dir)
         save_segmentation_tiff(path, mask, output_base_dir)
+
 
 def print_experiment_summary(raw_dir):
     """
@@ -136,7 +154,12 @@ def print_experiment_summary(raw_dir):
         elif unique_shapes:
             print(f"     Shape: {unique_shapes[0]}")
 
-def run_segmentation_pipeline(raw_dir, output_dir, model, z_axis, channel_axis, batch_size, do_3D, stitch_threshold):
+def run_segmentation_pipeline(
+    raw_dir, output_dir, model, z_axis, channel_axis, batch_size, do_3D, stitch_threshold,
+    flow_threshold,                 # === NEW ===
+    cellprob_threshold,             # === NEW ===
+    tile_norm_blocksize             # === NEW ===
+):
     tiff_groups = get_tiff_groups_by_experiment(raw_dir)
     for exp_name, tiff_list in tiff_groups.items():
         print(f"\n Starting segmentation for experiment: {exp_name} ({len(tiff_list)} TIFFs)")
@@ -147,4 +170,8 @@ def run_segmentation_pipeline(raw_dir, output_dir, model, z_axis, channel_axis, 
             batch_size=batch_size,
             do_3D=do_3D,
             stitch_threshold=stitch_threshold,
+            flow_threshold=flow_threshold,               # === NEW ===
+            cellprob_threshold=cellprob_threshold,       # === NEW ===
+            tile_norm_blocksize=tile_norm_blocksize      # === NEW ===
         )
+
