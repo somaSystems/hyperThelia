@@ -63,43 +63,51 @@ def get_pickle_groups_by_experiment(raw_dir):
     return pickle_groups
 
 
+from pathlib import Path
+from tifffile import imread, imwrite
+import numpy as np
+
 def segment_single_tiff(path, model, z_axis, channel_axis, batch_size, do_3D, stitch_threshold):
     """
-    Segments a single TIFF and returns the stitched mask.
-    All segmentation parameters must be passed explicitly.
+    Segments a single TIFF with Cellpose in strict 2D mode.
+    - 2D grayscale (H, W) -> (H, W, 1), channel_axis = -1
+    - z_axis is forced to None for 2D
+    - do_3D stays False
     """
-    print(f" Segmenting: {path.name}")
+    print(f" Segmenting: {Path(path).name}")
     img = imread(path)
 
-    # === NEW === Normalize dims so Cellpose is happy but still run true 2D
-    if img.ndim == 2:
-        # Promote grayscale 2D (H, W) -> (1, H, W) and treat that singleton as Z
-        img_in = img[None, ...]      # (1, H, W)
-        z_axis_local = 0             # tell Cellpose where Z is
-        do_3D_local = False          # still 2D inference
-        channel_axis_local = None    # grayscale
-    elif img.ndim == 3 and channel_axis == -1:
-        # RGB or channel-last (H, W, C)
-        img_in = img
-        z_axis_local = None
-        do_3D_local = False
-        channel_axis_local = -1
-    else:
-        # Already has 3 dims in a Z,H,W style or user provided axes explicitly
-        img_in = img
-        z_axis_local = z_axis
-        do_3D_local = do_3D
-        channel_axis_local = channel_axis
+    # Ensure numpy array (no memmap weirdness)
+    img = np.asarray(img)
 
-    masks_stitched, _, _ = model.eval(
+    # REQUIRE: grayscale, not RGB
+    if img.ndim == 3 and img.shape[-1] in (3, 4):
+        raise ValueError("This pipeline expects grayscale. Got RGB/RGBA. Convert to grayscale first.")
+
+    # Normalize to 2D-with-channel: (H, W) -> (H, W, 1)
+    if img.ndim == 2:
+        img_in = img[..., None]     # (H, W, 1)
+    elif img.ndim == 3 and channel_axis == -1:
+        # Already has a channel axis last (e.g., (H, W, 1) or multi-channel)
+        img_in = img
+    else:
+        # Anything else → make it (H, W, 1)
+        img_in = img.squeeze()
+        if img_in.ndim != 2:
+            raise ValueError(f"Unexpected image shape {img.shape}; cannot coerce to 2D.")
+        img_in = img_in[..., None]
+
+    # Call Cellpose in strict 2D mode
+    masks, _, _ = model.eval(
         img_in,
-        z_axis=z_axis_local,
-        channel_axis=channel_axis_local,
-        batch_size=batch_size,
-        do_3D=do_3D_local,
-        stitch_threshold=0.0 if stitch_threshold is None else stitch_threshold,
+        z_axis=None,                # MUST be None for 2D
+        channel_axis=-1,            # last axis is channel (size 1 here)
+        batch_size=int(batch_size),
+        do_3D=False,                # 2D inference
+        stitch_threshold=0.0 if stitch_threshold is None else float(stitch_threshold),
     )
-    return masks_stitched
+    return masks
+
 
 
 # def segment_single_tiff(path, model, z_axis, channel_axis, batch_size, do_3D, stitch_threshold):
