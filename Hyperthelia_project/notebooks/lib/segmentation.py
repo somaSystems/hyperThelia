@@ -62,31 +62,71 @@ def get_pickle_groups_by_experiment(raw_dir):
 
     return pickle_groups
 
+
 def segment_single_tiff(path, model, z_axis, channel_axis, batch_size, do_3D, stitch_threshold):
     """
     Segments a single TIFF and returns the stitched mask.
     All segmentation parameters must be passed explicitly.
     """
     print(f" Segmenting: {path.name}")
-    img_3D = imread(path)
+    img = imread(path)
 
-    # === NEW === If the image is 2D, force 2D mode to avoid accidental 3D stitching.
-    if img_3D.ndim == 2:
+    # === NEW === Normalize dims so Cellpose is happy but still run true 2D
+    if img.ndim == 2:
+        # Promote grayscale 2D (H, W) -> (1, H, W) and treat that singleton as Z
+        img_in = img[None, ...]      # (1, H, W)
+        z_axis_local = 0             # tell Cellpose where Z is
+        do_3D_local = False          # still 2D inference
+        channel_axis_local = None    # grayscale
+    elif img.ndim == 3 and channel_axis == -1:
+        # RGB or channel-last (H, W, C)
+        img_in = img
         z_axis_local = None
         do_3D_local = False
+        channel_axis_local = -1
     else:
+        # Already has 3 dims in a Z,H,W style or user provided axes explicitly
+        img_in = img
         z_axis_local = z_axis
         do_3D_local = do_3D
+        channel_axis_local = channel_axis
 
     masks_stitched, _, _ = model.eval(
-        img_3D,
+        img_in,
         z_axis=z_axis_local,
-        channel_axis=channel_axis,
+        channel_axis=channel_axis_local,
         batch_size=batch_size,
         do_3D=do_3D_local,
-        stitch_threshold=stitch_threshold,
+        stitch_threshold=0.0 if stitch_threshold is None else stitch_threshold,
     )
     return masks_stitched
+
+
+# def segment_single_tiff(path, model, z_axis, channel_axis, batch_size, do_3D, stitch_threshold):
+#     """
+#     Segments a single TIFF and returns the stitched mask.
+#     All segmentation parameters must be passed explicitly.
+#     """
+#     print(f" Segmenting: {path.name}")
+#     img_3D = imread(path)
+
+#     # === NEW === If the image is 2D, force 2D mode to avoid accidental 3D stitching.
+#     if img_3D.ndim == 2:
+#         z_axis_local = None
+#         do_3D_local = False
+#     else:
+#         z_axis_local = z_axis
+#         do_3D_local = do_3D
+
+#     masks_stitched, _, _ = model.eval(
+#         img_3D,
+#         z_axis=z_axis_local,
+#         channel_axis=channel_axis,
+#         batch_size=batch_size,
+#         do_3D=do_3D_local,
+#         stitch_threshold=stitch_threshold,
+#     )
+#     return masks_stitched
 
 
 def save_segmentation_pickle(path, mask, output_base_dir):
