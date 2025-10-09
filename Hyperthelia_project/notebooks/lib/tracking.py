@@ -9,6 +9,13 @@ from skimage.measure import regionprops
 from scipy.spatial.distance import cdist
 from scipy.optimize import linear_sum_assignment
 
+# === NEW ===
+from skimage.measure import regionprops
+from scipy.spatial.distance import cdist
+from scipy.optimize import linear_sum_assignment
+import numpy as np
+
+
 # === DISCOVER SEGMENTED TIFFS ===
 def get_segmented_tiffs_by_experiment(output_base_dir):
     experiment_groups = {}
@@ -121,12 +128,8 @@ def track_3d_centroids(label_stack,
 
 
 
-# === NEW === 2D centroid finder (area in pixels, XY only)
+# === NEW === 2D centroid finder (area in pixels)
 def get_2d_centroids(label_img_2d, size_range=(500, 50000), edge_margin=1):
-    """
-    Find 2D object centroids from a label image (H, W).
-    size_range is pixel area (min_area, max_area).
-    """
     H, W = label_img_2d.shape
     props = regionprops(label_img_2d)
     out = []
@@ -151,11 +154,6 @@ def track_2d_centroids(label_stack_2d,
                        xy_um=0.325,
                        max_dist_um=30,
                        mode="nearest"):
-    """
-    Track objects across frames using 2D centroids (y, x).
-    label_stack_2d: list of 2D label arrays (H, W), one per timepoint.
-    Returns: list of [(track_id, (y, x)), ...] per frame.
-    """
     if mode != "nearest":
         raise NotImplementedError("Only 'nearest' mode is supported for 2D.")
 
@@ -176,12 +174,10 @@ def track_2d_centroids(label_stack_2d,
             prev_ids = []
             continue
 
-        # Scale to microns (XY only)
         prev_um = prev_centroids.astype(float) * xy_um
         curr_um = curr_centroids.astype(float) * xy_um
 
         cost = cdist(prev_um, curr_um)
-        # Break impossible links
         cost[cost > max_dist_um] = 1e6
 
         row_ind, col_ind = linear_sum_assignment(cost)
@@ -190,7 +186,6 @@ def track_2d_centroids(label_stack_2d,
             if cost[i, j] < 1e6:
                 matched_ids[j] = prev_ids[i]
 
-        # New tracks for unmatched
         unmatched = [i for i in range(len(curr_centroids)) if i not in matched_ids]
         new_id_map = {i: id_counter + k for k, i in enumerate(unmatched)}
         id_counter += len(unmatched)
@@ -202,6 +197,7 @@ def track_2d_centroids(label_stack_2d,
         prev_ids = curr_ids
 
     return tracked
+
 
 
 # === SAVE AND LOAD ===
@@ -248,17 +244,17 @@ def run_tracking_pipeline(
 
         first = label_stack[0]
         if first.ndim == 2:
-            # === NEW === 2D path: interpret min/max as pixel AREA thresholds
+            # === NEW === 2D path: treat min/max as pixel AREA thresholds
             tracked = track_2d_centroids(
                 label_stack,
-                size_range=(min_volume, max_volume),  # here it's 2D area in px
+                size_range=(min_volume, max_volume),
                 edge_margin=edge_margin,
                 xy_um=xy_um,
                 max_dist_um=max_dist_um,
                 mode=tracking_mode
             )
         else:
-            # Existing 3D path: min/max are voxel counts
+            # Existing 3D path (voxel volumes)
             tracked = track_3d_centroids(
                 label_stack,
                 size_range=(min_volume, max_volume),
@@ -273,6 +269,51 @@ def run_tracking_pipeline(
             save_tracking_results(exp_name, tracked, output_base_dir)
 
         print(f" {exp_name}: Tracked {sum(len(x) for x in tracked)} total objects across {len(tracked)} timepoints.")
+
+
+# def run_tracking_pipeline(
+#     output_base_dir,
+#     xy_um=0.325,
+#     z_um=1.0,
+#     max_dist_um=30,
+#     min_volume=10000,
+#     max_volume=150000,
+#     edge_margin=1,
+#     tracking_mode="nearest",
+#     save_pickle=True
+# ):
+#     segmented_groups = get_segmented_tiffs_by_experiment(output_base_dir)
+#     for exp_name, tiffs in segmented_groups.items():
+#         print(f"\n Tracking {len(tiffs)} TIFF(s) for experiment: {exp_name}")
+#         label_stack = [imread(f) for f in tiffs]
+
+#         first = label_stack[0]
+#         if first.ndim == 2:
+#             # === NEW === 2D path: interpret min/max as pixel AREA thresholds
+#             tracked = track_2d_centroids(
+#                 label_stack,
+#                 size_range=(min_volume, max_volume),  # here it's 2D area in px
+#                 edge_margin=edge_margin,
+#                 xy_um=xy_um,
+#                 max_dist_um=max_dist_um,
+#                 mode=tracking_mode
+#             )
+#         else:
+#             # Existing 3D path: min/max are voxel counts
+#             tracked = track_3d_centroids(
+#                 label_stack,
+#                 size_range=(min_volume, max_volume),
+#                 edge_margin=edge_margin,
+#                 xy_um=xy_um,
+#                 z_um=z_um,
+#                 max_dist_um=max_dist_um,
+#                 mode=tracking_mode
+#             )
+
+#         if save_pickle:
+#             save_tracking_results(exp_name, tracked, output_base_dir)
+
+#         print(f" {exp_name}: Tracked {sum(len(x) for x in tracked)} total objects across {len(tracked)} timepoints.")
 
 # def run_tracking_pipeline(
 #     output_base_dir,
