@@ -70,15 +70,24 @@ def segment_single_tiff(path, model, z_axis, channel_axis, batch_size, do_3D, st
     print(f" Segmenting: {path.name}")
     img_3D = imread(path)
 
+    # === NEW === If the image is 2D, force 2D mode to avoid accidental 3D stitching.
+    if img_3D.ndim == 2:
+        z_axis_local = None
+        do_3D_local = False
+    else:
+        z_axis_local = z_axis
+        do_3D_local = do_3D
+
     masks_stitched, _, _ = model.eval(
         img_3D,
-        z_axis=z_axis,
+        z_axis=z_axis_local,
         channel_axis=channel_axis,
         batch_size=batch_size,
-        do_3D=do_3D,
+        do_3D=do_3D_local,
         stitch_threshold=stitch_threshold,
     )
     return masks_stitched
+
 
 def save_segmentation_pickle(path, mask, output_base_dir):
     experiment_name = path.parent.name
