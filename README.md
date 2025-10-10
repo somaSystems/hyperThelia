@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/para_morph_logo.png" alt="HyperThelia Logo" width="300"/>
+  <img src="images/para_morph_logo.png" alt="paraMorph Logo" width="300"/>
 </p>
 
 <p align="center">
@@ -15,16 +15,16 @@
 
 ---
 
-# HyperThelia
+# paraMorph
 
-HyperThelia is a modular, Google Colab-based pipeline for **3D timelapse cell image analysis**.  
+paraMorph is a modular, Google Colab-based pipeline for **3D timelapse cell image analysis**.  
 It runs segmentation, tracking, measurement, and visualisation with **no installation required**.
 
 ---
 
 ## Powered By
 
-HyperThelia combines outstanding open-source tools:
+paraMorph combines outstanding open-source tools:
 
 - [Cellpose-SAM](https://github.com/MouseLand/cellpose) – 3D segmentation
 - [TrackPy](https://soft-matter.github.io/trackpy/v0.5.0/) – centroid-based tracking
